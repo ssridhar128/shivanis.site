@@ -12,7 +12,6 @@
             line-height: 1.4;
         }
 
-        /* Container to allow for the sidebar layout */
         .container {
             display: flex;
             justify-content: space-between;
@@ -23,7 +22,6 @@
             flex: 1;
         }
 
-        /* Sidebar styling */
         .sidebar {
             background-color: #eeeeee;
             padding: 15px;
@@ -43,7 +41,6 @@
             margin-bottom: 15px;
         }
 
-        /* Gray sections for the homework lists */
         .section-box {
             background-color: #eeeeee;
             padding: 10px 20px;
@@ -63,6 +60,21 @@
         a {
             color: blue;
             text-decoration: underline;
+        }
+
+        .hw2-grid {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .hw2-column {
+            flex: 1; 
+        }
+
+        .hw2-column h4 {
+            margin: 5px 0;
+            font-size: 1em;
         }
     </style>
 </head>
@@ -89,7 +101,55 @@
             <section>
                 <h3>Homework 2</h3>
                 <div class="section-box">
-                    TBD
+                    <div class="hw2-grid">
+                        
+                        <div class="hw2-column">
+                            <h4>Perl</h4>
+                            <ul>
+                                <li><a href="hw2/perl/perl-hello-html-world.pl">Hello, Perl!</a></li>
+                                <li><a href="hw2/perl/perl-hello-json-world.pl">Hello, Perl! (JSON)</a></li>
+                                <li><a href="hw2/perl/perl-env.pl">Environment Variables</a></li>
+                                <li><a href="hw2/perl/perl-get-echo.pl">GET Echo</a></li>
+                                <li><a href="hw2/perl/perl-post-echo.pl">POST Echo</a></li>
+                                <li><a href="hw2/perl/perl-general-echo.pl">General Echo</a></li>
+                                <li><a href="hw2/perl/perl-sessions-1.pl">Sessioning</a></li>
+                            </ul>
+                        </div>
+            
+                        <div class="hw2-column">
+                            <h4>Java (JSP)</h4>
+                            <ul>
+                                <li><a href="hw2/hello.jsp">Hello, JSP!</a></li>
+                                <li><a href="hw2/hello_jsp_json.jsp">Hello, JSP! (JSON)</a></li>
+                                <li><a href="hw2/env_jsp.jsp">Environment Variables</a></li>
+                                <li><a href="hw2/get_echo.jsp">GET Echo</a></li>
+                                <li><a href="hw2/post_echo.jsp">POST Echo</a></li>
+                            </ul>
+                        </div>
+            
+                        <div class="hw2-column">
+                            <h4>Python</h4>
+                            <ul>
+                                <li><a>Hello, Python!</a></li>
+                                <li><a>Hello, Python! (JSON)</a></li>
+                                <li><a>Environment Variables</a></li>
+                                <li><a>GET Echo</a></li>
+                                <li><a>POST Echo</a></li>
+                            </ul>
+                        </div>
+            
+                        <div class="hw2-column">
+                            <h4>Ruby</h4>
+                            <ul>
+                                <li><a>Hello, Ruby!</a></li>
+                                <li><a>Hello, Ruby! (JSON)</a></li>
+                                <li><a>Environment Variables</a></li>
+                                <li><a>GET Echo</a></li>
+                                <li><a>POST Echo</a></li>
+                            </ul>
+                        </div>
+            
+                    </div>
                 </div>
             </section>
 
