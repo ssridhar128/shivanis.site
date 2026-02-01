@@ -1,21 +1,26 @@
 #!/usr/bin/ruby
+require 'json'
+require 'date'
 
+# 1. Set Header to JSON
 puts "Cache-Control: no-cache"
-puts "Content-type: text/html"
+puts "Content-type: application/json"
 puts ""
 
-puts "<!DOCTYPE html><html><head><title>General Request Echo</title></head>"
-puts "<body><h1 align='center'>General Request Echo</h1><hr>"
-
-puts "<p><b>HTTP Protocol:</b> #{ENV['SERVER_PROTOCOL']}</p>"
-puts "<p><b>HTTP Method:</b> #{ENV['REQUEST_METHOD']}</p>"
-puts "<p><b>Query String:</b> #{ENV['QUERY_STRING']}</p>"
-
-puts "<p><b>User Agent:</b> #{ENV['HTTP_USER_AGENT']}</p>"
-puts "<p><b>IP Address:</b> #{ENV['REMOTE_ADDR']}</p>"
-
+# 2. Get Request Data
 content_length = ENV['CONTENT_LENGTH'].to_i
-form_data = $stdin.read(content_length)
+payload = $stdin.read(content_length)
 
-puts "<p><b>Message Body:</b> #{form_data}</p>"
-puts "</body></html>"
+# 3. Create Hash Map
+response = {
+  "hostname" => ENV['SERVER_NAME'],
+  "datetime" => Time.now.strftime("%Y-%m-%d %H:%M:%S"),
+  "user_agent" => ENV['HTTP_USER_AGENT'],
+  "IP_address" => ENV['REMOTE_ADDR'],
+  "method" => ENV['REQUEST_METHOD'],
+  "query_params" => ENV['QUERY_STRING'],
+  "payload" => payload
+}
+
+# 4. Output as JSON
+puts JSON.pretty_generate(response)
