@@ -13,6 +13,9 @@
     <p><b>HTTP Method:</b> <%= request.getMethod() %></p>
     <p><b>Query String:</b> <%= request.getQueryString() %></p>
 
+    <p><b>User Agent:</b> <%= request.getHeader("user-agent") %></p>
+    <p><b>IP Address:</b> <%= request.getHeader("X-Forwarded-For") != null ? request.getHeader("X-Forwarded-For") : request.getRemoteAddr() %></p>
+
     <%
         // To read the Message Body in JSP, we must read the input stream
         StringBuilder jb = new StringBuilder();

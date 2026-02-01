@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Echo Form</title>
+</head>
+<body>
+    <h1>Echo Form</h1>
+    <hr>
+    <form id="echoForm">
+        <label>Target Language:</label>
+        <select id="language">
+            <option value="jsp/java-general-echo.jsp">JSP</option>
+            <option value="python/python-general-echo.py">Python</option>
+            <option value="ruby/ruby-general-echo.rb">Ruby</option>
+        </select>
+
+        <label>HTTP Method:</label>
+        <select id="method">
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+        </select>
+
+        <label>Encoding:</label>
+        <select id="encoding">
+            <option value="application/x-www-form-urlencoded">URL Encoded</option>
+            <option value="application/json">JSON</option>
+        </select>
+
+        <br><br>
+        <input type="text" id="formData" value="hello">
+        <button type="button" onclick="submitEcho()">Submit Request</button>
+    </form>
+
+    <h3>Response:</h3>
+    <pre id="responseOutput" style="background: #f0f0f0; padding: 10px;"></pre>
+
+    <script>
+        async function submitEcho() {
+            const langPath = document.getElementById('language').value;
+            const method = document.getElementById('method').value;
+            const encoding = document.getElementById('encoding').value;
+            const data = document.getElementById('formData').value;
+            
+            const url = `https://shivanis.site/hw2/${langPath}`;
+            let options = { method: method, headers: { 'Content-Type': encoding } };
+
+            // Handle data body for non-GET requests
+            if (method !== 'GET') {
+                options.body = encoding === 'application/json' 
+                    ? JSON.stringify({ sample_data: data }) 
+                    : `sample_data=${encodeURIComponent(data)}`;
+            } else {
+                // For GET, append to URL instead
+                const finalUrl = `${url}?sample_data=${encodeURIComponent(data)}`;
+                const res = await fetch(finalUrl);
+                document.getElementById('responseOutput').innerText = await res.text();
+                return;
+            }
+
+            const response = await fetch(url, options);
+            document.getElementById('responseOutput').innerText = await response.text();
+        }
+    </script>
+</body>
+</html>
