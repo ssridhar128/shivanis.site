@@ -1,22 +1,22 @@
 #!/usr/bin/python3
-import os
-import sys
+import os, sys, json, datetime
 
+# Change content-type to application/json
 print("Cache-Control: no-cache")
-print("Content-type: text/html\n")
-
-print("<!DOCTYPE html><html><head><title>General Request Echo</title></head>")
-print("<body><h1 align='center'>General Request Echo</h1><hr>")
-
-print(f"<p><b>HTTP Protocol:</b> {os.environ.get('SERVER_PROTOCOL', 'N/A')}</p>")
-print(f"<p><b>HTTP Method:</b> {os.environ.get('REQUEST_METHOD', 'N/A')}</p>")
-print(f"<p><b>Query String:</b> {os.environ.get('QUERY_STRING', 'N/A')}</p>")
-
-print(f"<p><b>User Agent:</b> {os.environ.get('HTTP_USER_AGENT', 'N/A')}</p>")
-print(f"<p><b>IP Address:</b> {os.environ.get('REMOTE_ADDR', 'N/A')}</p>")
+print("Content-type: application/json\n")
 
 content_length = int(os.environ.get('CONTENT_LENGTH', 0))
-form_data = sys.stdin.read(content_length)
+payload = sys.stdin.read(content_length)
 
-print(f"<p><b>Message Body:</b> {form_data}</p>")
-print("</body></html>")
+# Create a dictionary to match the demo screenshot structure
+response = {
+    "hostname": os.environ.get('SERVER_NAME'),
+    "datetime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    "user_agent": os.environ.get('HTTP_USER_AGENT'),
+    "IP_address": os.environ.get('REMOTE_ADDR'),
+    "method": os.environ.get('REQUEST_METHOD'),
+    "query_params": os.environ.get('QUERY_STRING'),
+    "payload": payload
+}
+
+print(json.dumps(response, indent=2))
