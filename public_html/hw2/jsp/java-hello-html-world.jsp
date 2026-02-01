@@ -11,18 +11,11 @@
     <p>Hello World</p>
     <p>This page was generated with the JavaServer Pages programming language</p>
 
-    <%
-        // 1. Handle Date and Time
-        Date date = new Date();
-    %>
-    <p>This program was generated at: <%= date.toString() %></p>
+    <%-- 1. Handle Date and Time --%>
+    <p>This program was generated at: <%= new java.util.Date().toString() %></p>
 
-    <%
-        // 2. Handle IP Address
-        // In JSP, the 'request' object is automatically available
-        String address = request.getRemoteAddr();
-    %>
-    <p>Your current IP Address is: <%= address %></p>
+    <%-- 2. Handle IP Address --%>
+    <p>Your current IP Address is: <%= request.getRemoteAddr() %></p>
 
 </body>
 </html>
