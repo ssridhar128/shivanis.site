@@ -1,5 +1,4 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.Date" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -11,10 +10,10 @@
     <p>Hello World</p>
     <p>This page was generated with the JavaServer Pages programming language</p>
 
-    <%-- 1. Handle Date and Time --%>
+    <%-- 1. Handle Date and Time using an Expression Tag --%>
     <p>This program was generated at: <%= new java.util.Date().toString() %></p>
 
-    <%-- 2. Handle IP Address --%>
+    <%-- 2. Handle IP Address using the built-in request object --%>
     <p>Your current IP Address is: <%= request.getRemoteAddr() %></p>
 
 </body>
