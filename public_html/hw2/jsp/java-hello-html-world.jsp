@@ -13,8 +13,8 @@
     <%-- 1. Handle Date and Time using an Expression Tag --%>
     <p>This program was generated at: <%= new java.util.Date().toString() %></p>
 
-    <%-- 2. Handle IP Address using the built-in request object --%>
-    <p>Your current IP Address is: <%= request.getRemoteAddr() %></p>
+    <%-- 2. Handle IP Address --%>
+    <p>Your current IP Address is: <%= request.getHeader("X-Forwarded-For") != null ? request.getHeader("X-Forwarded-For") : request.getRemoteAddr() %></p>
 
 </body>
 </html>
