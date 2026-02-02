@@ -3,11 +3,12 @@ require 'cgi'
 
 cgi = CGI.new
 cookie_name = "saved_ruby_name"
-# Read current cookie
+
 existing_cookie = cgi.cookies[cookie_name]
 saved_name = existing_cookie && existing_cookie.value ? existing_cookie.value[0] : "None"
 
-# Handle actions
+cookie = existing_cookie 
+
 new_name = cgi['username']
 clear = cgi['clear']
 
@@ -21,7 +22,6 @@ elsif !new_name.empty?
   exit
 end
 
-# Output Headers and HTML
 puts cgi.header("type" => "text/html", "cookie" => cookie, "cache-control" => "no-cache")
 puts "<!DOCTYPE html><html><body><h1>Ruby State</h1>"
 puts "<p>Stored Name: <b>#{saved_name}</b></p>"
