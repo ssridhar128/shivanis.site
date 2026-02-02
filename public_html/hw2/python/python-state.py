@@ -57,6 +57,11 @@ elif new_name:
         save_to_db(visitor_id, new_name)
     else:
         sys.stderr.write("DEBUG: visitorId was missing from POST data\n")
+    safe_name = urllib.parse.quote(new_name) 
+    print(f"Set-Cookie: saved_name={safe_name}")
+    print("Location: python-state.py") # This refreshes the page
+    print("\n")
+    sys.exit()
 
 print("Content-type: text/html\n")
 
