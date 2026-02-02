@@ -191,21 +191,37 @@ print(f"""
                 const result = await fp.get();
                 const vid = result.visitorId;
 
+                console.log("1. Fingerprint loaded, visitorId:", vid);
                 document.getElementById('visitorIdField').value = vid;
                 
                 const urlParams = new URLSearchParams(window.location.search);
                 const justCleared = urlParams.get('just_cleared') === 'true';
+                const savedName = "{saved_name}";
+                
+                console.log("2. justCleared:", justCleared, "savedName:", savedName);
 
                 // If cookie was just cleared, try to reassociate from fingerprint database
-                if (("{saved_name}" == "None" || "{saved_name}" == "") && justCleared) {{
+                if ((savedName == "None" || savedName == "") && justCleared) {{
+                    console.log("3. Conditions met, fetching reassociate_id...");
                     fetch('python-state.py?reassociate_id=' + vid)
                         .then(res => res.json())
                         .then(data => {{
+                            console.log("4. Server response:", data);
                             if (data.reassociated) {{
+                                console.log("5. Reassociated! Redirecting to restore_name...");
                                 document.getElementById('fp-msg').innerText = "Restoring from fingerprint...";
                                 window.location.href = 'python-state.py?restore_name=' + encodeURIComponent(data.name);
+                            }} else {{
+                                console.log("5. NOT reassociated - fingerprint not found in database");
+                                document.getElementById('fp-msg').innerText = "Fingerprint not found in database";
+                                document.getElementById('fp-msg').style.color = "red";
                             }}
+                        }})
+                        .catch(err => {{
+                            console.error("4. Fetch error:", err);
                         }});
+                }} else {{
+                    console.log("3. Conditions NOT met for reassociation");
                 }}
             }} catch (e) {{
                 console.error("FingerprintJS error:", e);
