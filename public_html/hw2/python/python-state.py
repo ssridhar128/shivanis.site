@@ -101,31 +101,55 @@ print(f"""
 <html>
 <head>
     <title>Python State + Fingerprinting</title>
+    <script src="https://openfpcdn.io/fingerprintjs/v4/iife.min.js"></script>
     <script>
-        const fpPromise = import('https://openfpcdn.io/fingerprintjs/v4')
-            .then(FingerprintJS => FingerprintJS.load());
-
         async function initFP() {{
-            const fp = await fpPromise;
-            const result = await fp.get();
-            const vid = result.visitorId;
+            try {{
+                document.getElementById('vid-display').innerText = "Initializing...";
+                
+                // Check if FingerprintJS loaded
+                if (typeof FingerprintJS === 'undefined') {{
+                    document.getElementById('vid-display').innerText = "ERROR: FingerprintJS not loaded";
+                    return;
+                }}
+                
+                const fp = await FingerprintJS.load();
+                const result = await fp.get();
+                const vid = result.visitorId;
 
-            document.getElementById('visitorIdField').value = vid;
-            document.getElementById('vid-display').innerText = vid;
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            const justCleared = urlParams.get('just_cleared') === 'true';
+                document.getElementById('visitorIdField').value = vid;
+                document.getElementById('vid-display').innerText = vid;
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const justCleared = urlParams.get('just_cleared') === 'true';
 
-            if (("{saved_name}" == "None" || "{saved_name}" == "") && justCleared) {{
-                fetch('python-state.py?reassociate_id=' + vid)
-                    .then(res => res.json())
-                    .then(data => {{
-                        if (data.reassociated) {{
-                            document.getElementById('fp-msg').innerText = "Reassociated via Fingerprint: " + data.name;
-                        }}
-                    }});
+                if (("{saved_name}" == "None" || "{saved_name}" == "") && justCleared) {{
+                    fetch('python-state.py?reassociate_id=' + vid)
+                        .then(res => res.json())
+                        .then(data => {{
+                            if (data.reassociated) {{
+                                document.getElementById('fp-msg').innerText = "Reassociated via Fingerprint: " + data.name;
+                            }}
+                        }});
+                }}
+            }} catch (e) {{
+                document.getElementById('vid-display').innerText = "ERROR: " + e.message;
+                console.error("FingerprintJS error:", e);
             }}
         }}
+        
+        // Prevent form submission if visitorId is empty
+        document.addEventListener('DOMContentLoaded', function() {{
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function(e) {{
+                const vid = document.getElementById('visitorIdField').value;
+                if (!vid) {{
+                    alert('Please wait for fingerprint to load before submitting');
+                    e.preventDefault();
+                }}
+            }});
+        }});
+        
         window.onload = initFP;
     </script>
 </head>
