@@ -12,10 +12,13 @@ def get_fp_db():
         return dict(line.strip().split("|") for line in f if "|" in line)
 
 def save_to_db(vid, name):
-    with open(DB_FILE, "a") as f:
-        f.write(f"{vid}|{name}\n")
-        f.flush()
-        os.fsync(f.fileno())
+    try:
+        with open(DB_FILE, "a") as f:
+            f.write(f"{vid}|{name}\n")
+            f.flush()
+            os.fsync(f.fileno())
+    except Exception as e:
+        sys.stderr.write(f"DATABASE ERROR: {str(e)}\n")
 
 query = urllib.parse.parse_qs(os.environ.get('QUERY_STRING', ''))
 if 'reassociate_id' in query:
@@ -48,14 +51,11 @@ if clear:
     print("\n")
     sys.exit()
 elif new_name:
-    visitor_id = params.get('visitorId', [None])[0]
+    visitor_id = params.get('visitorId', [None])[0] 
     if visitor_id:
         save_to_db(visitor_id, new_name)
-    
-    safe_name = urllib.parse.quote(new_name) 
-    print(f"Set-Cookie: saved_name={safe_name}")
-    print("Location: python-state.py\n")
-    sys.exit()
+    else:
+        sys.stderr.write("DEBUG: visitorId was missing from POST data\n")
 
 print("Content-type: text/html\n")
 
