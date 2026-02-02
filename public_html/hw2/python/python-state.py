@@ -12,10 +12,10 @@ def get_fp_db():
         return dict(line.strip().split("|") for line in f if "|" in line)
 
 def save_to_db(vid, name):
-    db = get_fp_db()
-    db[vid] = name
-    with open(DB_FILE, "w") as f:
-        for k, v in db.items(): f.write(f"{k}|{v}\n")
+    with open(DB_FILE, "a") as f:
+        f.write(f"{vid}|{name}\n")
+        f.flush()
+        os.fsync(f.fileno())
 
 query = urllib.parse.parse_qs(os.environ.get('QUERY_STRING', ''))
 if 'reassociate_id' in query:
