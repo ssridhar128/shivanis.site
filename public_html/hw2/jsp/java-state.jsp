@@ -4,6 +4,8 @@
     String name = request.getParameter("username");
     if (name != null && !name.isEmpty()) {
         session.setAttribute("saved_name", name);
+        response.sendRedirect("java-state.jsp");
+        return;
     }
 
     // 2. Handle "Clear" action

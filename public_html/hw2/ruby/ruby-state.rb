@@ -13,10 +13,12 @@ clear = cgi['clear']
 
 if clear == "true"
   cookie = CGI::Cookie.new('name' => cookie_name, 'value' => '', 'expires' => Time.at(0))
-  saved_name = "None"
+  puts cgi.header("status" => "REDIRECT", "location" => "ruby-state.rb", "cookie" => cookie)
+  exit
 elsif !new_name.empty?
   cookie = CGI::Cookie.new('name' => cookie_name, 'value' => new_name)
-  saved_name = new_name
+  puts cgi.header("status" => "REDIRECT", "location" => "ruby-state.rb", "cookie" => cookie)
+  exit
 end
 
 # Output Headers and HTML

@@ -20,10 +20,14 @@ clear = params.get('clear', [None])[0]
 print("Cache-Control: no-cache")
 if clear:
     print("Set-Cookie: saved_name=; expires=Thu, 01 Jan 1970 00:00:00 GMT")
-    saved_name = "None"
+    print("Location: python-state.py")
+    print("\n")
+    sys.exit()
 elif new_name:
     print(f"Set-Cookie: saved_name={new_name}")
-    saved_name = new_name
+    print("Location: python-state.py")
+    print("\n") # End headers
+    sys.exit()
 
 print("Content-type: text/html\n")
 
