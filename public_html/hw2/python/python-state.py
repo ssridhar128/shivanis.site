@@ -4,7 +4,7 @@ import sys
 import urllib.parse
 from http import cookies
 
-DB_FILE = "fp_database.txt"
+DB_FILE = "/var/www/shivanis.site/public_html/hw2/fp_database.txt"
 
 def get_fp_db():
     if not os.path.exists(DB_FILE): return {}
