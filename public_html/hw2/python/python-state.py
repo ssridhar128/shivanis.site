@@ -42,14 +42,73 @@ if 'reassociate_id' in query:
         print(json.dumps({"reassociated": False}))
     sys.exit()
 
-# Handle restore cookie from fingerprint (sets cookie and redirects)
+# Handle restore cookie from fingerprint (sets cookie and shows page)
 if 'restore_name' in query:
     restore_name = query['restore_name'][0]
     safe_name = urllib.parse.quote(restore_name)
     print("Cache-Control: no-cache")
     print(f"Set-Cookie: saved_name={safe_name}; Path=/")
-    print("Location: python-state.py?restored=1")
-    print("\n")
+    print("Content-type: text/html\n")
+    print(f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Python State + Fingerprinting</title>
+</head>
+<body>
+    <h1>Python State + Fingerprinting</h1>
+    <p>Stored Name: <b>{restore_name}</b></p>
+    
+    <form method="POST" action="python-state.py">
+        <input type="text" name="username" placeholder="Enter name">
+        <input type="hidden" name="visitorId" id="visitorIdField">
+        <button type="submit">Save to Cookie</button>
+    </form>
+
+    <form method="POST" action="python-state.py" style="margin-top:10px;">
+        <input type="hidden" name="clear" value="true">
+        <button type="submit">Clear Cookie</button>
+    </form>
+    
+    <p style="color: green; font-weight: bold;">Restored from fingerprint!</p>
+    
+    <script>
+        // Load fingerprint for the hidden field
+        function loadScript(src) {{
+            return new Promise((resolve, reject) => {{
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            }});
+        }}
+        
+        async function initFP() {{
+            const cdnSources = [
+                'https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js',
+                'https://unpkg.com/@fingerprintjs/fingerprintjs@4/dist/fp.min.js'
+            ];
+            
+            for (const src of cdnSources) {{
+                try {{
+                    await loadScript(src);
+                    if (typeof FingerprintJS !== 'undefined') break;
+                }} catch (e) {{}}
+            }}
+            
+            if (typeof FingerprintJS !== 'undefined') {{
+                const fp = await FingerprintJS.load();
+                const result = await fp.get();
+                document.getElementById('visitorIdField').value = result.visitorId;
+            }}
+        }}
+        
+        document.addEventListener('DOMContentLoaded', initFP);
+    </script>
+</body>
+</html>
+""")
     sys.exit()
 
 cookie = cookies.SimpleCookie(os.environ.get("HTTP_COOKIE"))
