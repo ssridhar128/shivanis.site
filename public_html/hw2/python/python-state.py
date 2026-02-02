@@ -55,12 +55,11 @@ elif new_name:
     visitor_id = params.get('visitorId', [None])[0] 
     if visitor_id:
         save_to_db(visitor_id, new_name)
-    else:
-        sys.stderr.write("DEBUG: visitorId was missing from POST data\n")
+    
     safe_name = urllib.parse.quote(new_name) 
     print(f"Set-Cookie: saved_name={safe_name}")
-    print("Location: python-state.py") # This refreshes the page
-    print("\n")
+    print("Location: python-state.py") # Refresh to show the new name
+    print("\n") # Required blank line after headers
     sys.exit()
 
 print("Content-type: text/html\n")
@@ -83,7 +82,7 @@ print(f"""
             const urlParams = new URLSearchParams(window.location.search);
             const justCleared = urlParams.get('just_cleared') === 'true';
 
-            if ("{saved_name}" == "None" || "{saved_name}" == "" && justCleared) {{
+            if (("{saved_name}" == "None" || "{saved_name}" == "") && justCleared) {{
                 fetch('python-state.py?reassociate_id=' + vid)
                     .then(res => res.json())
                     .then(data => {{
