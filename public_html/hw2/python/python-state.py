@@ -92,7 +92,7 @@ print(f"""
     </script>
 </head>
 <body>
-    <h1>Python State (with Fingerprinting)</h1>
+    <h1>Python State (attempt with Fingerprinting)</h1>
     <p>Stored Name: <b>{saved_name}</b></p>
     
     <form method="POST">
