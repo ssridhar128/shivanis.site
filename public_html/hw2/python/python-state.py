@@ -4,7 +4,10 @@ import sys
 import urllib.parse
 from http import cookies
 
-DB_FILE = "/var/www/shivanis.site/public_html/hw2/fp_database.txt"
+# Get the directory where this script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Database file is one level up from the python/ directory
+DB_FILE = os.path.join(SCRIPT_DIR, "..", "fp_database.txt")
 
 def get_fp_db():
     if not os.path.exists(DB_FILE): return {}
