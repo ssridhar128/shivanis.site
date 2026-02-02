@@ -39,6 +39,8 @@ def save_to_db(vid, name):
         return False
 
 query = urllib.parse.parse_qs(os.environ.get('QUERY_STRING', ''))
+
+# Handle reassociation lookup (returns JSON)
 if 'reassociate_id' in query:
     vid = query['reassociate_id'][0]
     db = get_fp_db()
@@ -48,6 +50,16 @@ if 'reassociate_id' in query:
         print(json.dumps({"reassociated": True, "name": db[vid]}))
     else:
         print(json.dumps({"reassociated": False}))
+    sys.exit()
+
+# Handle restore cookie from fingerprint (sets cookie and redirects)
+if 'restore_name' in query:
+    restore_name = query['restore_name'][0]
+    safe_name = urllib.parse.quote(restore_name)
+    print("Cache-Control: no-cache")
+    print(f"Set-Cookie: saved_name={safe_name}")
+    print("Location: python-state.py?restored=1")
+    print("\n")
     sys.exit()
 
 
@@ -89,6 +101,7 @@ elif new_name:
 query_params = urllib.parse.parse_qs(os.environ.get('QUERY_STRING', ''))
 fp_saved = query_params.get('fp_saved', [''])[0]
 save_ok = query_params.get('save_ok', [''])[0]
+restored = query_params.get('restored', [''])[0]
 
 # Check DB status
 db_exists = os.path.exists(DB_FILE)
@@ -162,13 +175,24 @@ print(f"""
                 const urlParams = new URLSearchParams(window.location.search);
                 const justCleared = urlParams.get('just_cleared') === 'true';
 
+                // If cookie was just cleared, try to reassociate from fingerprint database
                 if (("{saved_name}" == "None" || "{saved_name}" == "") && justCleared) {{
+                    document.getElementById('fp-msg').innerText = "Looking up fingerprint in database...";
                     fetch('python-state.py?reassociate_id=' + vid)
                         .then(res => res.json())
                         .then(data => {{
                             if (data.reassociated) {{
-                                document.getElementById('fp-msg').innerText = "Reassociated via Fingerprint: " + data.name;
+                                document.getElementById('fp-msg').innerText = "Found! Restoring: " + data.name;
+                                // Redirect to restore the cookie with the name from database
+                                window.location.href = 'python-state.py?restore_name=' + encodeURIComponent(data.name);
+                            }} else {{
+                                document.getElementById('fp-msg').innerText = "No previous fingerprint found in database.";
+                                document.getElementById('fp-msg').style.color = 'orange';
                             }}
+                        }})
+                        .catch(err => {{
+                            document.getElementById('fp-msg').innerText = "Error looking up fingerprint: " + err;
+                            document.getElementById('fp-msg').style.color = 'red';
                         }});
                 }}
             }} catch (e) {{
@@ -209,7 +233,7 @@ print(f"""
         <button type="submit">Clear Cookie</button>
     </form>
     
-    <p id="fp-msg" style="color: blue; font-weight: bold;"></p>
+    <p id="fp-msg" style="color: blue; font-weight: bold;">{"Restored from fingerprint database!" if restored == "1" else ""}</p>
     
     <hr>
     <h3>Debug Info:</h3>
