@@ -47,7 +47,8 @@ clear = params.get('clear', [None])[0]
 print("Cache-Control: no-cache")
 if clear:
     print("Set-Cookie: saved_name=; expires=Thu, 01 Jan 1970 00:00:00 GMT")
-    print("Location: python-state.py")
+    # Add ?just_cleared=true to the redirect URL
+    print("Location: python-state.py?just_cleared=true")
     print("\n")
     sys.exit()
 elif new_name:
@@ -65,7 +66,6 @@ print(f"""
 <head>
     <title>Python State + Fingerprinting</title>
     <script>
-        // Load FingerprintJS
         const fpPromise = import('https://openfpcdn.io/fingerprintjs/v4')
             .then(FingerprintJS => FingerprintJS.load());
 
@@ -74,18 +74,16 @@ print(f"""
             const result = await fp.get();
             const vid = result.visitorId;
 
-            // Fill hidden field for the Save form
             document.getElementById('visitorIdField').value = vid;
+            const urlParams = new URLSearchParams(window.location.search);
+            const justCleared = urlParams.get('just_cleared') === 'true';
 
-            // If the cookie is cleared (saved_name is None), try to reassociate
-            if ("{saved_name}" == "None" || "{saved_name}" == "") {{
+            if ("{saved_name}" == "None" || "{saved_name}" == "" && justCleared) {{
                 fetch('python-state.py?reassociate_id=' + vid)
                     .then(res => res.json())
                     .then(data => {{
                         if (data.reassociated) {{
                             document.getElementById('fp-msg').innerText = "Reassociated via Fingerprint: " + data.name;
-                            // Briefly wait, then reload to show the restored cookie
-                            // (In Step 4, you'd ideally set the cookie again during reassociation)
                         }}
                     }});
             }}
