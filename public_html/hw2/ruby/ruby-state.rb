@@ -4,11 +4,10 @@ require 'cgi'
 cgi = CGI.new
 cookie_name = "saved_ruby_name"
 
-# 1. Read existing cookie
 existing_cookie = cgi.cookies[cookie_name]
 saved_name = (existing_cookie && !existing_cookie.empty?) ? existing_cookie[0] : "None"
 
-# 2. Handle Logic
+
 new_name = cgi['username']
 clear = cgi['clear']
 
@@ -22,8 +21,6 @@ elsif !new_name.to_s.empty?
   exit
 end
 
-# 3. Output Headers and HTML
-# Only send the cookie header if the cookie exists to avoid 500 errors
 header_options = { "type" => "text/html", "cache-control" => "no-cache" }
 header_options["cookie"] = existing_cookie if existing_cookie && !existing_cookie.empty?
 

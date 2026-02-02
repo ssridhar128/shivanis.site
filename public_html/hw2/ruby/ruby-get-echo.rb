@@ -13,7 +13,6 @@ puts "<body><h1 align='center'>Get Request Echo</h1><hr>"
 
 puts "<b>Query String:</b> #{query_string}<br />"
 
-# Loop through parameters
 cgi.params.each do |key, values|
   puts "#{key} = #{values[0]}<br />"
 end

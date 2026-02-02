@@ -10,7 +10,6 @@ cgi = CGI.new
 content_length = ENV['CONTENT_LENGTH'].to_i
 raw_payload = $stdin.read(content_length)
 
-# Create the nested structure from the screenshot
 response = {
   "hostname" => ENV['SERVER_NAME'],
   "datetime" => Time.now.strftime("%Y-%m-%d %H:%M:%S"),

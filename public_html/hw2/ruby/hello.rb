@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 puts "Content-type: text/html"
-puts "" # The mandatory blank line
+puts ""
 puts "<html>"
 puts "<body>"
 puts "<h1>Shivani Ruby CGI Lives!</h1>"
