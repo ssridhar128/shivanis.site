@@ -101,24 +101,63 @@ print(f"""
 <html>
 <head>
     <title>Python State + Fingerprinting</title>
-    <script src="https://openfpcdn.io/fingerprintjs/v4/iife.min.js"></script>
     <script>
+        // Show protocol for debugging
+        document.addEventListener('DOMContentLoaded', function() {{
+            document.getElementById('protocol-info').innerText = window.location.protocol;
+        }});
+        
+        // Try loading FingerprintJS from multiple sources
+        function loadScript(src) {{
+            return new Promise((resolve, reject) => {{
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            }});
+        }}
+        
         async function initFP() {{
-            try {{
-                document.getElementById('vid-display').innerText = "Initializing...";
-                
-                // Check if FingerprintJS loaded
-                if (typeof FingerprintJS === 'undefined') {{
-                    document.getElementById('vid-display').innerText = "ERROR: FingerprintJS not loaded";
-                    return;
+            const vidDisplay = document.getElementById('vid-display');
+            vidDisplay.innerText = "Loading library...";
+            
+            // List of CDN sources to try
+            const cdnSources = [
+                'https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js',
+                'https://unpkg.com/@fingerprintjs/fingerprintjs@4/dist/fp.min.js',
+                'https://openfpcdn.io/fingerprintjs/v4/iife.min.js'
+            ];
+            
+            let loaded = false;
+            for (const src of cdnSources) {{
+                try {{
+                    vidDisplay.innerText = "Trying: " + src.split('/')[2] + "...";
+                    await loadScript(src);
+                    if (typeof FingerprintJS !== 'undefined') {{
+                        loaded = true;
+                        break;
+                    }}
+                }} catch (e) {{
+                    console.log("Failed to load from:", src);
                 }}
-                
+            }}
+            
+            if (!loaded || typeof FingerprintJS === 'undefined') {{
+                vidDisplay.innerText = "ERROR: Could not load FingerprintJS from any CDN. Check HTTPS & CSP.";
+                vidDisplay.style.color = 'red';
+                return;
+            }}
+            
+            try {{
+                vidDisplay.innerText = "Getting fingerprint...";
                 const fp = await FingerprintJS.load();
                 const result = await fp.get();
                 const vid = result.visitorId;
 
                 document.getElementById('visitorIdField').value = vid;
-                document.getElementById('vid-display').innerText = vid;
+                vidDisplay.innerText = vid;
+                vidDisplay.style.color = 'green';
                 
                 const urlParams = new URLSearchParams(window.location.search);
                 const justCleared = urlParams.get('just_cleared') === 'true';
@@ -133,7 +172,8 @@ print(f"""
                         }});
                 }}
             }} catch (e) {{
-                document.getElementById('vid-display').innerText = "ERROR: " + e.message;
+                vidDisplay.innerText = "ERROR: " + e.message;
+                vidDisplay.style.color = 'red';
                 console.error("FingerprintJS error:", e);
             }}
         }}
@@ -148,9 +188,10 @@ print(f"""
                     e.preventDefault();
                 }}
             }});
+            
+            // Start loading fingerprint
+            initFP();
         }});
-        
-        window.onload = initFP;
     </script>
 </head>
 <body>
@@ -173,6 +214,7 @@ print(f"""
     <hr>
     <h3>Debug Info:</h3>
     <ul>
+        <li>Protocol: <span id="protocol-info" style="font-weight:bold;">(checking...)</span> <small>(FingerprintJS requires HTTPS)</small></li>
         <li>Visitor ID: <span id="vid-display" style="color:green;">(loading...)</span></li>
         <li>DB Path: <code>{DB_FILE}</code></li>
         <li>DB Exists: {db_exists}</li>
