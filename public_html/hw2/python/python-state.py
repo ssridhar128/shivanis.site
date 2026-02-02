@@ -47,7 +47,7 @@ if 'restore_name' in query:
     restore_name = query['restore_name'][0]
     safe_name = urllib.parse.quote(restore_name)
     print("Cache-Control: no-cache")
-    print(f"Set-Cookie: saved_name={safe_name}")
+    print(f"Set-Cookie: saved_name={safe_name}; Path=/")
     print("Location: python-state.py?restored=1")
     print("\n")
     sys.exit()
@@ -65,7 +65,7 @@ clear = params.get('clear', [None])[0]
 
 print("Cache-Control: no-cache")
 if clear:
-    print("Set-Cookie: saved_name=; expires=Thu, 01 Jan 1970 00:00:00 GMT")
+    print("Set-Cookie: saved_name=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/")
     print("Location: python-state.py?just_cleared=true")
     print("\n")
     sys.exit()
@@ -75,7 +75,7 @@ elif new_name:
         save_to_db(visitor_id, new_name)
     
     safe_name = urllib.parse.quote(new_name) 
-    print(f"Set-Cookie: saved_name={safe_name}")
+    print(f"Set-Cookie: saved_name={safe_name}; Path=/")
     print("Location: python-state.py")
     print("\n")
     sys.exit()
