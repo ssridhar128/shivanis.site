@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Hello CGI World</title>
-    <script src="https://cdn.logr-in.com/LogRocket.min.js" crossorigin="anonymous"></script>
-    <script>window.LogRocket && window.LogRocket.init('cofrns/shivanissite');</script>
+    <!-- <script src="https://cdn.logr-in.com/LogRocket.min.js" crossorigin="anonymous"></script>
+    <script>window.LogRocket && window.LogRocket.init('cofrns/shivanissite');</script> -->
 </head>
 <body>
     <h1 align="center">Hello Shivani HTML World (JSP)</h1><hr/>
