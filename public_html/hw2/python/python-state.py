@@ -4,9 +4,10 @@ import sys
 import urllib.parse
 from http import cookies
 
-# 1. Parse existing cookies
+# 1. Parse existing cookies (UNQUOTE THE VALUE HERE)
 cookie = cookies.SimpleCookie(os.environ.get("HTTP_COOKIE"))
-saved_name = cookie.get("saved_name").value if cookie.get("saved_name") else "None"
+raw_val = cookie.get("saved_name").value if cookie.get("saved_name") else "None"
+saved_name = urllib.parse.unquote(raw_val) # Decodes %20 back into a space
 
 # 2. Handle Form Submission
 content_length = int(os.environ.get('CONTENT_LENGTH', 0))
@@ -16,7 +17,7 @@ params = urllib.parse.parse_qs(post_data)
 new_name = params.get('username', [None])[0]
 clear = params.get('clear', [None])[0]
 
-# 3. Prepare Headers
+# 3. Prepare Headers (QUOTE THE VALUE HERE)
 print("Cache-Control: no-cache")
 if clear:
     print("Set-Cookie: saved_name=; expires=Thu, 01 Jan 1970 00:00:00 GMT")
@@ -24,9 +25,11 @@ if clear:
     print("\n")
     sys.exit()
 elif new_name:
-    print(f"Set-Cookie: saved_name={new_name}")
+    # Encodes spaces as %20 so the browser accepts the cookie
+    safe_name = urllib.parse.quote(new_name) 
+    print(f"Set-Cookie: saved_name={safe_name}")
     print("Location: python-state.py")
-    print("\n") # End headers
+    print("\n")
     sys.exit()
 
 print("Content-type: text/html\n")
