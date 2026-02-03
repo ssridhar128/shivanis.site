@@ -139,13 +139,23 @@
 
     // Handle "Clear" action
     if (request.getParameter("clear") != null) {
+        // Remove the attribute first, then invalidate
+        session.removeAttribute("saved_name");
         session.invalidate();
-        response.sendRedirect("java-state.jsp?just_cleared=true");
+        // Get a new session to avoid issues
+        request.getSession(true);
+        response.setStatus(HttpServletResponse.SC_FOUND);
+        response.setHeader("Location", "java-state.jsp?just_cleared=true");
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         return;
     }
 
+    // Check if just cleared (new session after invalidation)
+    String justClearedParam = request.getParameter("just_cleared");
+    boolean isJustCleared = "true".equals(justClearedParam);
+    
     String savedName = (String) session.getAttribute("saved_name");
-    String displayName = (savedName != null) ? savedName : "None";
+    String displayName = (savedName != null && !savedName.isEmpty()) ? savedName : "None";
 %>
 <!DOCTYPE html>
 <html>
@@ -229,14 +239,17 @@
         }
         
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('form');
-            form.addEventListener('submit', function(e) {
-                const vid = document.getElementById('visitorIdField').value;
-                if (!vid) {
-                    alert('Please wait for fingerprint to load before submitting');
-                    e.preventDefault();
-                }
-            });
+            // Only attach validation to the save form, not the clear form
+            const saveForm = document.getElementById('saveForm');
+            if (saveForm) {
+                saveForm.addEventListener('submit', function(e) {
+                    const vid = document.getElementById('visitorIdField').value;
+                    if (!vid) {
+                        alert('Please wait for fingerprint to load before submitting');
+                        e.preventDefault();
+                    }
+                });
+            }
             
             initFP();
         });
@@ -246,13 +259,13 @@
     <h1>JSP State + Fingerprinting</h1>
     <p>Stored Name: <b><%= displayName %></b></p>
     
-    <form method="POST">
+    <form method="POST" id="saveForm">
         <input type="text" name="username" placeholder="Enter name">
         <input type="hidden" name="visitorId" id="visitorIdField">
         <button type="submit">Save to Session</button>
     </form>
 
-    <form method="POST" style="margin-top:10px;">
+    <form method="POST" id="clearForm" style="margin-top:10px;">
         <input type="hidden" name="clear" value="true">
         <button type="submit">Clear Session</button>
     </form>
