@@ -1,6 +1,11 @@
 <?php
-// 1. Set the CORS headers first
-header("Access-Control-Allow-Origin: https://test.shivanis.site");
+// 1. CORS: allow our origins and allow credentials (cookies) when requested
+$allowed_origins = ['https://test.shivanis.site'];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowed_origins, true)) {
+    header("Access-Control-Allow-Origin: " . $origin);
+    header("Access-Control-Allow-Credentials: true");
+}
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
@@ -22,5 +27,4 @@ if ($json) {
 } else {
     http_response_code(400);
     echo json_encode(["status" => "error", "message" => "No data received"]);
-}
-?>
+}?>
