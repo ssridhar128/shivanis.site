@@ -4,7 +4,7 @@ if (!sessionId) {
     sessionStorage.setItem('session_id', sessionId);
 }
 
-const ENDPOINT = 'https://collector.shivanis.site/api/log';
+const ENDPOINT = 'https://collector.shivanis.site/api/log.php';
 
 // STATIC DATA
 window.addEventListener('load', () => {
