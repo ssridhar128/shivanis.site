@@ -9,16 +9,18 @@ header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['jsEnabled'])) {
-    $payload = [
-        "type" => "static",
-        "jsEnabled" => false,
-        "userAgent" => $_SERVER['HTTP_USER_AGENT'],
-        "page" => $_GET['page'] ?? 'unknown'
-    ];
-    
-    $stmt = $pdo->prepare('INSERT INTO collector_log (type, session_id, payload) VALUES (?, ?, ?)');
-    $stmt->execute(['static', 'no-js-user', json_encode($payload)]);
-    exit; 
+    if ($pdo) {
+        $payload = [
+            "type" => "static",
+            "jsEnabled" => false,
+            "userAgent" => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+            "page" => $_GET['page'] ?? 'unknown'
+        ];
+        
+        $stmt = $pdo->prepare('INSERT INTO collector_log (type, session_id, payload) VALUES (?, ?, ?)');
+        $stmt->execute(['static', 'no-js-user', json_encode($payload)]);
+    }
+    exit;
 }
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
