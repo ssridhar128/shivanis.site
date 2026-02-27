@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Analytics Reporting Dashboard</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background: #f4f4f9; }
+        .controls { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        pre { white-space: pre-wrap; word-wrap: break-word; font-size: 12px; background: #f9f9f9; padding: 10px; border-radius: 4px; }
+        select { padding: 10px; font-size: 16px; border-radius: 4px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <h1>Analytics Reporting Dashboard</h1>
+        <label for="resourceSelect">Select Data Type: </label>
+        <select id="resourceSelect" onchange="loadData(this.value)">
+            <option value="static">Static Data</option>
+            <option value="performance">Performance Data</option>
+            <option value="activity">Activity Data</option>
+        </select>
+    </div>
+
+    <div id="status">Loading data...</div>
+    
+    <table id="reportTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Time</th>
+                <th>Session ID</th>
+                <th>Data Payload</th>
+            </tr>
+        </thead>
+        <tbody id="reportContent"></tbody>
+    </table>
+
+    <script>
+        async function loadData(resourceType) {
+            const table = document.getElementById('reportTable');
+            const content = document.getElementById('reportContent');
+            const status = document.getElementById('status');
+            content.innerHTML = '';
+            status.style.display = 'block';
+            status.innerText = `Fetching ${resourceType} data...`;
+            table.style.display = 'none';
+
+            try {
+                const response = await fetch(`/api/${resourceType}`);
+                const data = await response.json();
+                
+                if (!data || data.length === 0) {
+                    status.innerText = `No ${resourceType} records found in the database.`;
+                    return;
+                }
+
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.id}</td>
+                        <td>${row.received_at}</td>
+                        <td>${row.session_id}</td>
+                        <td><pre>${JSON.stringify(row.payload, null, 2)}</pre></td>
+                    `;
+                    content.appendChild(tr);
+                });
+
+                status.style.display = 'none';
+                table.style.display = 'table';
+            } catch (err) {
+                status.innerText = "Error loading data: " + err;
+            }
+        }
+
+        loadData('static');
+    </script>
+</body>
+</html>
