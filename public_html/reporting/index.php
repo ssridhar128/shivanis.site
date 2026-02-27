@@ -2,8 +2,6 @@
 /**
  * Part 5: REST API (test site only).
  * Routes: /api/static, /api/static/{id}, /api/performance, /api/performance/{id}, /api/activity, /api/activity/{id}
- * GET (no id)=list all for type, GET (id)=one, POST=create, PUT (id)=update, DELETE (id)=delete.
- * Uses same MySQL database as collector (collector_log).
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -24,17 +22,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $method = $_SERVER['REQUEST_METHOD'];
 $path = $_SERVER['REQUEST_URI'];
+
 // Strip query string and normalize path
 $path = parse_url($path, PHP_URL_PATH);
 $path = rtrim($path, '/');
-if (strpos($path, '/api/') !== 0) {
+
+// --- FIXED PATH PARSING LOGIC ---
+$apiPos = strpos($path, '/api/');
+if ($apiPos === false) {
     jsonResponse(404, ['error' => 'Not found']);
     exit;
 }
-$path = substr($path, 4); // after /api
-$segments = array_filter(explode('/', $path));
+
+// Substr +5 skips exactly "/api/" to get clean segments
+$pathAfterApi = substr($path, $apiPos + 5); 
+$segments = array_values(array_filter(explode('/', $pathAfterApi)));
+
 $resource = $segments[0] ?? '';
 $id = isset($segments[1]) && $segments[1] !== '' ? (int) $segments[1] : null;
+// --------------------------------
 
 $allowedTypes = ['static', 'performance', 'activity'];
 if (!in_array($resource, $allowedTypes, true)) {
@@ -42,17 +48,13 @@ if (!in_array($resource, $allowedTypes, true)) {
     exit;
 }
 
-// Method rules: POST must not have id; PUT and DELETE must have id
+// Method rules
 if ($method === 'POST' && $id !== null) {
     jsonResponse(400, ['error' => 'POST must not include an ID']);
     exit;
 }
 if (in_array($method, ['PUT', 'DELETE'], true) && $id === null) {
     jsonResponse(400, ['error' => $method . ' requires an ID in the path']);
-    exit;
-}
-if (!in_array($method, ['GET', 'POST', 'PUT', 'DELETE'], true)) {
-    jsonResponse(405, ['error' => 'Method not allowed']);
     exit;
 }
 
@@ -63,6 +65,7 @@ if (!is_file($configPath)) {
 }
 $config = require $configPath;
 $dsn = sprintf('mysql:host=%s;port=%s;dbname=%s;charset=%s', $config['host'], $config['port'] ?? 3306, $config['dbname'], $config['charset'] ?? 'utf8mb4');
+
 try {
     $pdo = new PDO($dsn, $config['username'], $config['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 } catch (PDOException $e) {
