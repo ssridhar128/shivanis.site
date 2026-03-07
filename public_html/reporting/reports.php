@@ -43,19 +43,19 @@ $user = getCurrentUser();
     </header>
     <main>
         <h2>Dashboard</h2>
-        <p style="color:#9ca3af; margin-bottom:1.5rem;">Select a report below. Protected pages (Table, Charts) require authentication; direct URLs are protected.</p>
+        <p style="color:#9ca3af; margin-bottom:1.5rem;">Select a report below. Protected pages (Table, Charts) require authentication</p>
         <div class="cards">
             <a class="card" href="index.html">
-                <h3>Dashboard (Table)</h3>
+                <h3>Dashboard (This is the table I made for the last hw to show my data)</h3>
                 <p>Main analytics dashboard with data table from the database (index.html).</p>
             </a>
             <a class="card" href="table.php">
                 <h3>Data Table (protected)</h3>
-                <p>Same collector_log data in a table — behind login; direct URL cannot bypass auth.</p>
+                <p>This is the data table I made for this HW by converting my last hw html to php so that it is password protected.</p>
             </a>
             <a class="card" href="charts.php">
                 <h3>Charts (protected)</h3>
-                <p>Chart.js charts from collector_log: counts by type and events over time.</p>
+                <p>This is the charts page I made for this HW using Chart.js. Hover over the points on the line graph and the bars on the bar chart for more info.</p>
             </a>
         </div>
     </main>
