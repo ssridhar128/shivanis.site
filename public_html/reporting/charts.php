@@ -1,7 +1,4 @@
 <?php
-/**
- * Charts: protected page with Chart.js; data from collector_log via API.
- */
 require_once __DIR__ . '/auth.php';
 requireLogin();
 $user = getCurrentUser();
