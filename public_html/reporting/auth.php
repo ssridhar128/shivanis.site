@@ -1,14 +1,7 @@
 <?php
-/**
- * Simple session-based auth for analytics reporting.
- * No sign-up; single credential set for grader/demo.
- */
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
-// Single user for grading/demo (no sign-up flow)
 const AUTH_USER = 'grader';
 const AUTH_PASS = 'grader';
 

@@ -1,12 +1,5 @@
 <?php
-/**
- * Part 5: REST API (test site only).
- * Routes: /api/static, /api/static/{id}, /api/performance, /api/performance/{id}, /api/activity, /api/activity/{id}
- */
-
 header('Content-Type: application/json; charset=utf-8');
-
-// CORS – test site only
 $allowed_origins = ['https://test.shivanis.site', 'http://localhost'];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowed_origins, true)) {
@@ -23,32 +16,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $method = $_SERVER['REQUEST_METHOD'];
 $path = $_SERVER['REQUEST_URI'];
 
-// Strip query string and normalize path
 $path = parse_url($path, PHP_URL_PATH);
 $path = rtrim($path, '/');
 
-// --- FIXED PATH PARSING LOGIC ---
 $apiPos = strpos($path, '/api/');
 if ($apiPos === false) {
     jsonResponse(404, ['error' => 'Not found']);
     exit;
 }
 
-// Substr +5 skips exactly "/api/" to get clean segments
 $pathAfterApi = substr($path, $apiPos + 5); 
 $segments = array_values(array_filter(explode('/', $pathAfterApi)));
 
 $resource = $segments[0] ?? '';
 $id = isset($segments[1]) && $segments[1] !== '' ? (int) $segments[1] : null;
-// --------------------------------
-
 $allowedTypes = ['static', 'performance', 'activity'];
 if (!in_array($resource, $allowedTypes, true)) {
     jsonResponse(404, ['error' => 'Unknown resource. Use /api/static, /api/performance, or /api/activity']);
     exit;
 }
 
-// Method rules
 if ($method === 'POST' && $id !== null) {
     jsonResponse(400, ['error' => 'POST must not include an ID']);
     exit;

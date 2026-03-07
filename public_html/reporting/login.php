@@ -19,7 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $error = 'Invalid username or password.';
 }
 
-// If already logged in, redirect to dashboard
 if (getCurrentUser() !== null) {
     header('Location: reports.php');
     exit;

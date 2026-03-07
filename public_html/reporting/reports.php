@@ -1,7 +1,4 @@
 <?php
-/**
- * Dashboard: protected; links to Data Table and Charts.
- */
 require_once __DIR__ . '/auth.php';
 requireLogin();
 $user = getCurrentUser();

@@ -1,7 +1,4 @@
 <?php
-/**
- * Data Table: protected page showing collector_log data from the API (database).
- */
 require_once __DIR__ . '/auth.php';
 requireLogin();
 $user = getCurrentUser();
@@ -79,7 +76,6 @@ $user = getCurrentUser();
             table.style.display = 'none';
 
             try {
-                // Same directory as this page (e.g. /reporting/) so api/static -> /reporting/api/static
                 const response = await fetch('api/' + resourceType);
                 const data = await response.json();
 

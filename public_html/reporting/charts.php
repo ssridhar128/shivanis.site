@@ -95,8 +95,6 @@ $user = getCurrentUser();
                     },
                     options: chartOptions
                 });
-
-                // Chart 2: Line – events over time (merge all, group by date)
                 const all = []
                     .concat((Array.isArray(staticData) ? staticData : []).map(r => ({ received_at: r.received_at })))
                     .concat((Array.isArray(perfData) ? perfData : []).map(r => ({ received_at: r.received_at })))
