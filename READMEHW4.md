@@ -1,0 +1,6 @@
+1) I created a login.php and a logout.php. In order to see any of the pages that are locked behind you would need to use the password and the username that I have provided below(grader and grader). If someone tries to get into any of the php pages that are under this directory, it will redirect them back to the login page. If they log out it will take them back to the login page as well.      
+2) I created a table.php page that basically took the html code that I wrote last week and makes it into php so I am able to lock in with the login page. It list all of the activity with timestamps and IDs. It queries the database for the latest info and displays it in a table format that I chose.      
+3) I added a Bar chart and a Line chart to my charts page. In order to go further than what LLMs can do, I did some research on how to get hovering features using ChartJS. I did this because I thought this was the best one to get interactive features like this. When you hover over the Bar graph it will tell you the amount of interactions that are under each of the different types of things I am getting from my test site. The line chart will tell you how many interactions I had each day for the past 7 days(You have to hover over a dot in order to see the data).
+URL: https://reporting.shivanis.site/login.php
+Username: grader
+Password: grader
