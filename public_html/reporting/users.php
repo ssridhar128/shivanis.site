@@ -124,11 +124,26 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
                     </select>
                 </div>
                 <div class="col-md-3" id="add-sections-container" style="display: none;">
-                    <label class="form-label d-block">Sections (analyst only)</label>
-                    <label class="me-2"><input type="checkbox" name="sections[]" value="performance" class="form-check-input"> Performance</label>
-                    <label class="me-2"><input type="checkbox" name="sections[]" value="behavioral" class="form-check-input"> Behavioral</label>
-                    <label><input type="checkbox" name="sections[]" value="static" class="form-check-input"> Static</label>
-                    <small class="d-block">Leave unchecked for all sections.</small>
+                    <label class="form-label d-block">Sections (analyst)</label>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start bg-dark text-light border-secondary" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            Select Sections...
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-dark p-2 w-100">
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" name="sections[]" value="performance" id="addSecP">
+                                <label class="form-check-label" for="addSecP">Performance</label>
+                            </div>
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" name="sections[]" value="behavioral" id="addSecB">
+                                <label class="form-check-label" for="addSecB">Behavioral</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="sections[]" value="static" id="addSecS">
+                                <label class="form-check-label" for="addSecS">Static</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-2"><button type="submit" class="btn btn-primary">Add</button></div>
             </form>
@@ -136,18 +151,16 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
     </div>
 
     <table class="table table-dark table-striped">
-        <thead><tr><th>Username</th><th>Role</th><th>Sections (analyst)</th><th>Created</th><th></th></tr></thead>
+        <thead><tr><th>Username</th><th>Role</th><th>Created</th><th></th></tr></thead>
         <tbody>
         <?php foreach ($users as $u):
             $raw = $u['sections'] ?? null;
             $sections = is_array($raw) ? $raw : (is_string($raw) && $raw !== '' ? json_decode($raw, true) : null);
             $sections = is_array($sections) ? $sections : [];
-            $sectionsStr = $u['role'] === 'analyst' ? (count($sections) > 0 ? implode(', ', $sections) : 'all') : '—';
         ?>
         <tr>
             <td><?= htmlspecialchars($u['username']) ?></td>
             <td><?= htmlspecialchars($u['role']) ?></td>
-            <td><?= htmlspecialchars($sectionsStr) ?></td>
             <td><?= htmlspecialchars($u['created_at']) ?></td>
             <td>
                 <?php if ($u['username'] === 'grader'): ?>
@@ -163,11 +176,25 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
                         </select>
                         
                         <?php $uSections = $sections; ?>
-                        <span class="update-sections-container ms-2" style="<?= $u['role'] === 'analyst' ? '' : 'display: none;' ?>">
-                            <label><input type="checkbox" name="sections[]" value="performance" <?= in_array('performance', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> P</label>
-                            <label class="ms-1"><input type="checkbox" name="sections[]" value="behavioral" <?= in_array('behavioral', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> B</label>
-                            <label class="ms-1"><input type="checkbox" name="sections[]" value="static" <?= in_array('static', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> S</label>
-                        </span>
+                        <div class="update-sections-container dropdown d-inline-block ms-1" style="<?= $u['role'] === 'analyst' ? '' : 'display: none;' ?>">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                Sections
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-dark p-2 text-light" style="min-width: 140px;">
+                                <div class="form-check mb-1">
+                                    <input class="form-check-input" type="checkbox" name="sections[]" value="performance" id="secP_<?= $u['id'] ?>" <?= in_array('performance', $uSections, true) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="secP_<?= $u['id'] ?>">Performance</label>
+                                </div>
+                                <div class="form-check mb-1">
+                                    <input class="form-check-input" type="checkbox" name="sections[]" value="behavioral" id="secB_<?= $u['id'] ?>" <?= in_array('behavioral', $uSections, true) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="secB_<?= $u['id'] ?>">Behavioral</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sections[]" value="static" id="secS_<?= $u['id'] ?>" <?= in_array('static', $uSections, true) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="secS_<?= $u['id'] ?>">Static</label>
+                                </div>
+                            </div>
+                        </div>
                         
                         <button type="submit" class="btn btn-sm btn-outline-light ms-1">Update</button>
                     </form>
@@ -196,7 +223,6 @@ document.addEventListener('DOMContentLoaded', function() {
         addRoleSelect.addEventListener('change', function() {
             addSectionsContainer.style.display = (this.value === 'analyst') ? 'block' : 'none';
         });
-        // Run once on load to set initial state
         addRoleSelect.dispatchEvent(new Event('change'));
     }
 
@@ -204,9 +230,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const updateRoleSelects = document.querySelectorAll('.update-role-select');
     updateRoleSelects.forEach(function(select) {
         select.addEventListener('change', function() {
-            // Find the sections container that sits right next to this specific dropdown
             const sectionsContainer = this.closest('form').querySelector('.update-sections-container');
             if (sectionsContainer) {
+                // Swapped to inline-block since we are using a div dropdown now
                 sectionsContainer.style.display = (this.value === 'analyst') ? 'inline-block' : 'none';
             }
         });
