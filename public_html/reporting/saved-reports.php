@@ -5,10 +5,33 @@ $pageTitle = 'Saved Reports';
 require __DIR__ . '/includes/header.php';
 
 $pdo = getDb();
-$reports = $pdo->query('SELECT r.id, r.title, r.slug, r.category, r.pdf_file, r.created_at, u.username AS created_by_name FROM reporting_saved_reports r JOIN reporting_users u ON r.created_by = u.id ORDER BY r.created_at DESC')->fetchAll(PDO::FETCH_ASSOC);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete' && isset($_POST['report_id'])) {
+    $reportId = (int) $_POST['report_id'];
+    if ($reportId > 0 && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN)) {
+        $stmt = $pdo->prepare('SELECT id, pdf_file FROM reporting_saved_reports WHERE id = ?');
+        $stmt->execute([$reportId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            $pdo->prepare('DELETE FROM reporting_saved_reports WHERE id = ?')->execute([$reportId]);
+            if (!empty($row['pdf_file'])) {
+                $path = __DIR__ . '/exports/' . basename($row['pdf_file']);
+                if (is_file($path)) {
+                    @unlink($path);
+                }
+            }
+        }
+        $base = dirname($_SERVER['SCRIPT_NAME']);
+        $base = ($base === '/' || $base === '\\' || $base === '.') ? '' : rtrim($base, '/');
+        header('Location: ' . $base . '/saved-reports.php?deleted=1');
+        exit;
+    }
+}
+
+$reports = $pdo->query('SELECT r.id, r.title, r.slug, r.category, r.pdf_file, r.created_at, r.created_by, u.username AS created_by_name FROM reporting_saved_reports r JOIN reporting_users u ON r.created_by = u.id ORDER BY r.created_at DESC')->fetchAll(PDO::FETCH_ASSOC);
 
 $createOk = !canOnlyViewSavedReports() && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN);
-if ($createOk && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'], $_POST['category'])) {
+if ($createOk && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'], $_POST['category']) && (!isset($_POST['action']) || $_POST['action'] !== 'delete')) {
     $title = trim((string) $_POST['title']);
     $category = (string) $_POST['category'];
     if ($title !== '' && in_array($category, ['performance', 'behavioral', 'static'], true) && canAccessSection($category)) {
@@ -30,16 +53,25 @@ if ($createOk && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'],
         }
         $stmt = $pdo->prepare('INSERT INTO reporting_saved_reports (title, slug, category, pdf_file, created_by) VALUES (?, ?, ?, ?, ?)');
         $stmt->execute([$title, $slug, $category, $pdfFile, getCurrentUserId()]);
+        $newId = (int) $pdo->lastInsertId();
         $base = (dirname($_SERVER['SCRIPT_NAME']) === '/' || dirname($_SERVER['SCRIPT_NAME']) === '\\') ? '' : rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
-        header('Location: ' . $base . '/saved-reports.php?saved=1');
+        $pdfPath = $pdfFile ? ('exports/' . $pdfFile) : '';
+        header('Location: ' . $base . '/saved-reports.php?saved=1&name=' . rawurlencode($title) . '&id=' . $newId . ($pdfPath ? '&path=' . rawurlencode($pdfPath) : ''));
         exit;
     }
 }
 ?>
 <main class="container py-4">
     <h1 class="h2 mb-4">Saved Reports</h1>
-    <?php if (!empty($_GET['saved'])): ?><div class="alert alert-success">Report saved. It appears below as a link to the PDF.</div><?php endif; ?>
-    <p class="text-secondary">Saved PDF reports. Viewers can only open these; analysts can create and view.</p>
+    <?php if (!empty($_GET['saved']) && !empty($_GET['name'])): ?>
+    <div class="alert alert-success">
+        <strong>Success!</strong> Report created: <?= htmlspecialchars($_GET['name']) ?>.
+        <?php if (!empty($_GET['path'])): ?>PDF saved at <code><?= htmlspecialchars($_GET['path']) ?></code>. <?php endif; ?>
+        Link to the PDF is listed below — click the report name to open it.
+    </div>
+    <?php endif; ?>
+    <?php if (!empty($_GET['deleted'])): ?><div class="alert alert-info">Report deleted.</div><?php endif; ?>
+    <p class="text-secondary">Saved PDF reports. Each link opens the generated PDF (charts, data table, comments). Viewers can only open these; analysts can create and delete.</p>
 
     <?php if ($createOk): ?>
     <div class="card bg-secondary border-dark mb-4">
@@ -65,11 +97,24 @@ if ($createOk && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'],
     <?php endif; ?>
 
     <div class="list-group">
-        <?php foreach ($reports as $r): ?>
-        <a href="<?= !empty($r['pdf_file']) ? 'view-pdf.php?id=' . (int) $r['id'] : 'view-report.php?id=' . (int) $r['id'] ?>" class="list-group-item list-group-item-action bg-secondary text-light border-dark d-flex justify-content-between align-items-center">
-            <span><strong><?= htmlspecialchars($r['title']) ?></strong> — <?= htmlspecialchars($r['category']) ?></span>
+        <?php foreach ($reports as $r):
+            $pdfLink = !empty($r['pdf_file']) ? ('view-pdf.php?id=' . (int) $r['id']) : ('view-report.php?id=' . (int) $r['id']);
+            $canDelete = $createOk && ((int) $r['created_by'] === getCurrentUserId() || getCurrentRole() === ROLE_SUPER_ADMIN);
+        ?>
+        <div class="list-group-item bg-secondary text-light border-dark d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <a href="<?= $pdfLink ?>" class="text-decoration-none text-light flex-grow-1">
+                <strong><?= htmlspecialchars($r['title']) ?></strong> — <?= htmlspecialchars($r['category']) ?>
+                <span class="text-primary ms-1 small">View PDF</span>
+            </a>
             <small class="text-secondary"><?= htmlspecialchars($r['created_at']) ?> by <?= htmlspecialchars($r['created_by_name']) ?></small>
-        </a>
+            <?php if ($canDelete): ?>
+            <form method="post" class="d-inline" onsubmit="return confirm('Delete this report?');">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="report_id" value="<?= (int) $r['id'] ?>">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+            </form>
+            <?php endif; ?>
+        </div>
         <?php endforeach; ?>
         <?php if (empty($reports)): ?>
         <p class="text-secondary">No saved reports yet.</p>

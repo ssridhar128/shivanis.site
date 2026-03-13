@@ -57,9 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
         $stmt = $pdo->prepare('INSERT INTO reporting_saved_reports (title, slug, category, pdf_file, created_by) VALUES (?, ?, ?, ?, ?)');
         $stmt->execute([$title, $slug, $cat, $pdfFile, getCurrentUserId()]);
+        $newId = (int) $pdo->lastInsertId();
         $base = dirname($_SERVER['SCRIPT_NAME']);
         $base = ($base === '/' || $base === '\\' || $base === '.') ? '' : rtrim($base, '/');
-        header('Location: ' . $base . '/saved-reports.php?saved=1');
+        $pdfPath = $pdfFile ? ('exports/' . $pdfFile) : '';
+        header('Location: ' . $base . '/saved-reports.php?saved=1&name=' . rawurlencode($title) . '&id=' . $newId . ($pdfPath ? '&path=' . rawurlencode($pdfPath) : ''));
         exit;
     }
 }
@@ -81,10 +83,7 @@ require __DIR__ . '/includes/header.php';
 <main class="container py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <h1 class="h2 mb-0">Data Table</h1>
-        <div class="d-flex gap-2">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#saveReportModal">Export PDF</button>
-            <a href="export-pdf.php?category=<?= rawurlencode($exportCategory) ?>" class="btn btn-outline-light" target="_blank">Preview PDF</a>
-        </div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#saveReportModal">Export PDF</button>
     </div>
     <!-- Modal: name this PDF and save to Saved Reports (same content as Export PDF) -->
     <div class="modal fade" id="saveReportModal" tabindex="-1" aria-labelledby="saveReportModalLabel" aria-hidden="true">
