@@ -13,7 +13,7 @@ require __DIR__ . '/includes/header.php';
                 <a href="table.php" class="card text-decoration-none text-light h-100 border-secondary hover-shadow card-dark-link">
                     <div class="card-body bg-secondary border-dark">
                         <h2 class="h5 card-title text-light">Data Table</h2>
-                        <p class="card-text text-secondary small">View static, performance, and activity data with charts and analyst comments.</p>
+                        <p class="card-text text-secondary small">Static, performance, and activity data in data table, charts, and has comments at the bottom. Export PDF exports a report</p>
                     </div>
                 </a>
             </div>
@@ -25,36 +25,6 @@ require __DIR__ . '/includes/header.php';
                     </div>
                 </a>
             </div>
-            <?php if (canAccessSection('performance')): ?>
-            <div class="col-md-6 col-lg-4">
-                <a href="report-performance.php" class="card text-decoration-none text-light h-100 border-secondary hover-shadow card-dark-link">
-                    <div class="card-body bg-secondary border-dark">
-                        <h2 class="h5 card-title text-light">Performance Report</h2>
-                        <p class="card-text text-secondary small">Metrics from the collector: load times, resource timing, and performance events.</p>
-                    </div>
-                </a>
-            </div>
-            <?php endif; ?>
-            <?php if (canAccessSection('behavioral')): ?>
-            <div class="col-md-6 col-lg-4">
-                <a href="report-behavioral.php" class="card text-decoration-none text-light h-100 border-secondary hover-shadow card-dark-link">
-                    <div class="card-body bg-secondary border-dark">
-                        <h2 class="h5 card-title text-light">Behavioral Report</h2>
-                        <p class="card-text text-secondary small">User activity and interaction events from the collector.</p>
-                    </div>
-                </a>
-            </div>
-            <?php endif; ?>
-            <?php if (canAccessSection('static')): ?>
-            <div class="col-md-6 col-lg-4">
-                <a href="report-static.php" class="card text-decoration-none text-light h-100 border-secondary hover-shadow card-dark-link">
-                    <div class="card-body bg-secondary border-dark">
-                        <h2 class="h5 card-title text-light">Static / Overview</h2>
-                        <p class="card-text text-secondary small">Static context and overview of collected data.</p>
-                    </div>
-                </a>
-            </div>
-            <?php endif; ?>
         <?php endif; ?>
         <div class="col-md-6 col-lg-4">
             <a href="saved-reports.php" class="card text-decoration-none text-light h-100 border-secondary hover-shadow card-dark-link">
