@@ -151,7 +151,7 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
             <td><?= htmlspecialchars($u['created_at']) ?></td>
             <td>
                 <?php if ($u['username'] === 'grader'): ?>
-                    <span class="text-secondary fst-italic">Protected System Account</span>
+                    <span class="text-secondary fst-italic">Cannot Update grader's Role</span>
                 <?php else: ?>
                     <form method="post" class="d-inline" onsubmit="return confirm('Update this user?');">
                         <input type="hidden" name="action" value="update">
