@@ -10,7 +10,6 @@ require __DIR__ . '/includes/header.php';
 ?>
 <main class="container py-4">
     <h1 class="h2 mb-4">Charts</h1>
-    <p class="text-secondary mb-4">Charts built from collector data. Same chart types as on the Data Table page.</p>
 
     <section class="mb-5">
         <h2 class="h5 text-light border-bottom border-secondary pb-2 mb-4">Static data</h2>
