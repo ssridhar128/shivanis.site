@@ -7,7 +7,7 @@ const CHART_COLORS = {
     purple: '#a855f7',
     lightBlue: '#818cf8',
     grid: '#374151',
-    text: '#9ca3af'
+    text: '#ffffff'
 };
 
 function parseDim(str) {

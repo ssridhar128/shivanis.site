@@ -53,7 +53,7 @@ if (getCurrentUser() !== null) {
                 <input type="text" id="username" name="username" class="form-control bg-dark text-light border-dark mb-2" autocomplete="username" required autofocus>
                 <label for="password" class="form-label">Password</label>
                 <input type="password" id="password" name="password" class="form-control bg-dark text-light border-dark mb-3" autocomplete="current-password" required>
-                <button type="submit" class="btn w-100" style="background: #6366f1; border-color: #6366f1; color: #0d0c0c;">Sign in</button>
+                <button type="submit" class="btn w-100" style="background: #6366f1; border-color: #6366f1; color: #fff;">Sign in</button>
             </form>
         </div>
     </div>
