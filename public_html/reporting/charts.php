@@ -5,33 +5,20 @@ if (canOnlyViewSavedReports()) {
     header('Location: 403.php');
     exit;
 }
-$pageTitle = 'Graphs';
+$pageTitle = 'Charts';
 require __DIR__ . '/includes/header.php';
 ?>
 <main class="container py-4">
-    <h1 class="h2 mb-4">Visual Analytics</h1>
-    <p class="text-secondary mb-4">Charts built from collector data. Same chart types as on the Data Table page, with a consistent color palette.</p>
+    <h1 class="h2 mb-4">Charts</h1>
+    <p class="text-secondary mb-4">Charts built from collector data. Same chart types as on the Data Table page.</p>
 
     <section class="mb-5">
         <h2 class="h5 text-light border-bottom border-secondary pb-2 mb-4">Static data</h2>
-        <div class="row g-4">
-            <div class="col-lg-6">
-                <div class="card bg-secondary border-dark h-100">
-                    <div class="card-body">
-                        <h3 class="h6 card-title text-light">Screen vs. Window Resolution</h3>
-                        <p class="small text-secondary mb-2">Physical screen sizes vs. browser window sizes (px).</p>
-                        <div style="height: 280px;"><canvas id="chartScatter"></canvas></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="card bg-secondary border-dark h-100">
-                    <div class="card-body">
-                        <h3 class="h6 card-title text-light">Browser Feature Support</h3>
-                        <p class="small text-secondary mb-2">% of sessions with feature enabled.</p>
-                        <div style="height: 280px;"><canvas id="chartFeature"></canvas></div>
-                    </div>
-                </div>
+        <div class="card bg-secondary border-dark">
+            <div class="card-body">
+                <h3 class="h6 card-title text-light">Browser Feature Support</h3>
+                <p class="small text-secondary mb-2">% of sessions with feature enabled.</p>
+                <div style="height: 280px;"><canvas id="chartFeature"></canvas></div>
             </div>
         </div>
     </section>
@@ -49,31 +36,18 @@ require __DIR__ . '/includes/header.php';
 
     <section class="mb-5">
         <h2 class="h5 text-light border-bottom border-secondary pb-2 mb-4">Activity</h2>
-        <div class="row g-4">
-            <div class="col-lg-6">
-                <div class="card bg-secondary border-dark h-100">
-                    <div class="card-body">
-                        <h3 class="h6 card-title text-light">Idle Time vs. Active Time</h3>
-                        <p class="small text-secondary mb-2">Per session (seconds).</p>
-                        <div style="height: 280px;"><canvas id="chartStacked"></canvas></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="card bg-secondary border-dark h-100">
-                    <div class="card-body">
-                        <h3 class="h6 card-title text-light">Session Engagement Hotspots</h3>
-                        <p class="small text-secondary mb-2">Click / scroll / mousemove positions (px).</p>
-                        <div style="height: 280px;"><canvas id="chartBubble"></canvas></div>
-                    </div>
-                </div>
+        <div class="card bg-secondary border-dark">
+            <div class="card-body">
+                <h3 class="h6 card-title text-light">Idle Time vs. Active Time</h3>
+                <p class="small text-secondary mb-2">Per session (seconds).</p>
+                <div style="height: 280px;"><canvas id="chartStacked"></canvas></div>
             </div>
         </div>
     </section>
 
     <div class="card bg-secondary border-dark">
         <div class="card-body">
-            <h3 class="h6 card-title text-light">Events by type</h3>
+            <h3 class="h6 card-title text-light">Events by type (from collector_log)</h3>
             <div style="height: 260px;"><canvas id="chartCounts"></canvas></div>
         </div>
     </div>
@@ -93,21 +67,10 @@ require __DIR__ . '/includes/header.php';
         const arrP = Array.isArray(perfData) ? perfData : [];
         const arrA = Array.isArray(activityData) ? activityData : [];
 
-        const { screen, window } = staticScreenVsWindow(arrS);
-        if (screen.length || window.length) {
-            new Chart(document.getElementById('chartScatter').getContext('2d'), {
-                type: 'scatter',
-                data: [
-                    { label: 'Physical screen sizes', data: screen, backgroundColor: CHART_COLORS.rose, borderColor: CHART_COLORS.rose, borderWidth: 1 },
-                    { label: 'Browser window sizes', data: window, backgroundColor: CHART_COLORS.primary, borderColor: CHART_COLORS.primary, borderWidth: 1 }
-                ],
-                options: { ...chartOpt, scales: { ...chartOpt.scales, x: { ...chartOpt.scales.x, title: { display: true, text: 'Width (px)', color: CHART_COLORS.text } }, y: { ...chartOpt.scales.y, title: { display: true, text: 'Height (px)', color: CHART_COLORS.text } } } }
-            });
-        }
         const feat = staticFeatureSupport(arrS);
         new Chart(document.getElementById('chartFeature').getContext('2d'), {
             type: 'bar',
-            data: { labels: feat.labels, datasets: [{ label: '% enabled', data: feat.values, backgroundColor: CHART_COLORS.teal, borderColor: CHART_COLORS.teal, borderWidth: 1 }] },
+            data: { labels: feat.labels, datasets: [{ label: '% enabled', data: feat.values, backgroundColor: CHART_COLORS.indigo, borderColor: CHART_COLORS.violet, borderWidth: 1 }] },
             options: { ...chartOpt, scales: { ...chartOpt.scales, y: { ...chartOpt.scales.y, max: 100, title: { display: true, text: 'Percentage (%)', color: CHART_COLORS.text } } } }
         });
 
@@ -115,7 +78,7 @@ require __DIR__ . '/includes/header.php';
         if (lt.labels.length) {
             new Chart(document.getElementById('chartLine').getContext('2d'), {
                 type: 'line',
-                data: { labels: lt.labels, datasets: [{ label: 'Total load time (ms)', data: lt.values, borderColor: CHART_COLORS.teal, backgroundColor: 'rgba(20, 184, 166, 0.1)', fill: true, tension: 0.2 }] },
+                data: { labels: lt.labels, datasets: [{ label: 'Total load time (ms)', data: lt.values, borderColor: CHART_COLORS.primary, backgroundColor: 'rgba(99, 102, 241, 0.15)', fill: true, tension: 0.2 }] },
                 options: { ...chartOpt, scales: { ...chartOpt.scales, y: { ...chartOpt.scales.y, title: { display: true, text: 'Milliseconds (ms)', color: CHART_COLORS.text } } } }
             });
         } else {
@@ -129,27 +92,20 @@ require __DIR__ . '/includes/header.php';
                 data: {
                     labels: idleActive.labels,
                     datasets: [
-                        { label: 'Active time (s)', data: idleActive.activeData, backgroundColor: CHART_COLORS.teal, borderColor: CHART_COLORS.teal, borderWidth: 1 },
-                        { label: 'Idle time (s)', data: idleActive.idleData, backgroundColor: CHART_COLORS.amber, borderColor: CHART_COLORS.amber, borderWidth: 1 }
+                        { label: 'Active time (s)', data: idleActive.activeData, backgroundColor: CHART_COLORS.primary, borderColor: CHART_COLORS.primary, borderWidth: 1 },
+                        { label: 'Idle time (s)', data: idleActive.idleData, backgroundColor: CHART_COLORS.violet, borderColor: CHART_COLORS.violet, borderWidth: 1 }
                     ]
                 },
                 options: { ...chartOpt, scales: { x: { ...chartOpt.scales.x, stacked: true, title: { display: true, text: 'Session ID', color: CHART_COLORS.text } }, y: { ...chartOpt.scales.y, stacked: true, title: { display: true, text: 'Time (seconds)', color: CHART_COLORS.text } } } }
             });
-        }
-        const hotspots = activityEngagementHotspots(arrA);
-        if (hotspots.length) {
-            const bubbleData = hotspots.slice(0, 200).map(p => ({ x: p.x, y: p.y, r: 4 }));
-            new Chart(document.getElementById('chartBubble').getContext('2d'), {
-                type: 'bubble',
-                data: [{ label: 'Activity hotspots', data: bubbleData, backgroundColor: 'rgba(244, 63, 94, 0.5)', borderColor: CHART_COLORS.rose, borderWidth: 1 }],
-                options: { ...chartOpt, scales: { ...chartOpt.scales, x: { ...chartOpt.scales.x, title: { display: true, text: 'X (px)', color: CHART_COLORS.text } }, y: { ...chartOpt.scales.y, title: { display: true, text: 'Y (px)', color: CHART_COLORS.text } } } }
-            });
+        } else {
+            document.getElementById('chartStacked').parentElement.innerHTML = '<p class="text-secondary small">No activity data by session.</p>';
         }
 
         const counts = [arrS.length, arrP.length, arrA.length];
         new Chart(document.getElementById('chartCounts').getContext('2d'), {
             type: 'bar',
-            data: { labels: ['Static', 'Performance', 'Activity'], datasets: [{ label: 'Event count', data: counts, backgroundColor: [CHART_COLORS.indigo, CHART_COLORS.teal, CHART_COLORS.violet], borderWidth: 1 }] },
+            data: { labels: ['Static', 'Performance', 'Activity'], datasets: [{ label: 'Events', data: counts, backgroundColor: [CHART_COLORS.indigo, CHART_COLORS.primary, CHART_COLORS.violet], borderWidth: 1 }] },
             options: chartOpt
         });
     }

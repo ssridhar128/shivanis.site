@@ -1,11 +1,11 @@
 const CHART_COLORS = {
-    primary: '#0ea5e9',
-    secondary: '#f97316',
-    teal: '#14b8a6',
-    amber: '#f59e0b',
-    rose: '#f43f5e',
+    primary: '#6366f1',
+    secondary: '#8b5cf6',
+    blue: '#3b82f6',
     indigo: '#6366f1',
     violet: '#8b5cf6',
+    purple: '#a855f7',
+    lightBlue: '#818cf8',
     grid: '#374151',
     text: '#9ca3af'
 };

@@ -20,26 +20,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment_text']) && (g
     </div>
     <p class="text-secondary">User activity and interaction events. Use Section Observations to interpret engagement and idle patterns.</p>
 
-    <div class="row g-4 mb-4">
-        <div class="col-lg-6">
-            <section class="card bg-secondary border-dark h-100">
-                <div class="card-body">
-                    <h2 class="h5 card-title text-light">Idle Time vs. Active Time</h2>
-                    <p class="small text-secondary mb-2">Per session (seconds). Stacked view of engagement.</p>
-                    <div style="height: 280px;"><canvas id="chartStacked"></canvas></div>
-                </div>
-            </section>
+    <section class="card bg-secondary border-dark mb-4">
+        <div class="card-body">
+            <h2 class="h5 card-title text-light">Idle Time vs. Active Time</h2>
+            <p class="small text-secondary mb-2">Per session (seconds). Stacked view of engagement.</p>
+            <div style="height: 280px;"><canvas id="chartStacked"></canvas></div>
         </div>
-        <div class="col-lg-6">
-            <section class="card bg-secondary border-dark h-100">
-                <div class="card-body">
-                    <h2 class="h5 card-title text-light">Session Engagement Hotspots</h2>
-                    <p class="small text-secondary mb-2">Click / scroll / mousemove positions (px).</p>
-                    <div style="height: 280px;"><canvas id="chartBubble"></canvas></div>
-                </div>
-            </section>
-        </div>
-    </div>
+    </section>
 
     <section class="card bg-secondary border-dark mb-4">
         <div class="card-body">
@@ -70,20 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment_text']) && (g
                 data: {
                     labels: idleActive.labels,
                     datasets: [
-                        { label: 'Active time (s)', data: idleActive.activeData, backgroundColor: CHART_COLORS.teal, borderColor: CHART_COLORS.teal, borderWidth: 1 },
-                        { label: 'Idle time (s)', data: idleActive.idleData, backgroundColor: CHART_COLORS.amber, borderColor: CHART_COLORS.amber, borderWidth: 1 }
+                        { label: 'Active time (s)', data: idleActive.activeData, backgroundColor: CHART_COLORS.primary, borderColor: CHART_COLORS.primary, borderWidth: 1 },
+                        { label: 'Idle time (s)', data: idleActive.idleData, backgroundColor: CHART_COLORS.violet, borderColor: CHART_COLORS.violet, borderWidth: 1 }
                     ]
                 },
                 options: { ...chartOpt, scales: { x: { ...chartOpt.scales.x, stacked: true, title: { display: true, text: 'Session ID', color: CHART_COLORS.text } }, y: { ...chartOpt.scales.y, stacked: true, title: { display: true, text: 'Time (seconds)', color: CHART_COLORS.text } } } }
-            });
-        }
-        const hotspots = activityEngagementHotspots(arr);
-        if (hotspots.length) {
-            const bubbleData = hotspots.slice(0, 200).map(p => ({ x: p.x, y: p.y, r: 4 }));
-            new Chart(document.getElementById('chartBubble').getContext('2d'), {
-                type: 'bubble',
-                data: [{ label: 'Activity hotspots', data: bubbleData, backgroundColor: 'rgba(244, 63, 94, 0.5)', borderColor: CHART_COLORS.rose, borderWidth: 1 }],
-                options: { ...chartOpt, scales: { ...chartOpt.scales, x: { ...chartOpt.scales.x, title: { display: true, text: 'X (px)', color: CHART_COLORS.text } }, y: { ...chartOpt.scales.y, title: { display: true, text: 'Y (px)', color: CHART_COLORS.text } } } }
             });
         }
         const status = document.getElementById('tableStatus');

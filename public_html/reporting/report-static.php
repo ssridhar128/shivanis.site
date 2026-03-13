@@ -18,28 +18,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment_text']) && (g
         <h1 class="h2 mb-0">Static / Overview</h1>
         <a href="export-pdf.php?category=static" class="btn btn-outline-light" target="_blank">Export PDF</a>
     </div>
-    <p class="text-secondary">Static context and overview: screen/window sizes and browser feature support. Use Section Observations to decode what the data means.</p>
+    <p class="text-secondary">Static context and overview: browser feature support. Use Section Observations to decode what the data means.</p>
 
-    <div class="row g-4 mb-4">
-        <div class="col-lg-6">
-            <section class="card bg-secondary border-dark h-100">
-                <div class="card-body">
-                    <h2 class="h5 card-title text-light">Screen vs. Window Resolution</h2>
-                    <p class="small text-secondary mb-2">Physical screen sizes vs. browser window sizes (px).</p>
-                    <div style="height: 280px;"><canvas id="chartScatter"></canvas></div>
-                </div>
-            </section>
+    <section class="card bg-secondary border-dark mb-4">
+        <div class="card-body">
+            <h2 class="h5 card-title text-light">Browser Feature Support</h2>
+            <p class="small text-secondary mb-2">% of sessions with feature enabled.</p>
+            <div style="height: 280px;"><canvas id="chartFeature"></canvas></div>
         </div>
-        <div class="col-lg-6">
-            <section class="card bg-secondary border-dark h-100">
-                <div class="card-body">
-                    <h2 class="h5 card-title text-light">Browser Feature Support</h2>
-                    <p class="small text-secondary mb-2">% of sessions with feature enabled.</p>
-                    <div style="height: 280px;"><canvas id="chartFeature"></canvas></div>
-                </div>
-            </section>
-        </div>
-    </div>
+    </section>
 
     <section class="card bg-secondary border-dark mb-4">
         <div class="card-body">
@@ -63,21 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment_text']) && (g
     const chartOpt = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: CHART_COLORS.text } } }, scales: { x: { ticks: { color: CHART_COLORS.text }, grid: { color: CHART_COLORS.grid } }, y: { ticks: { color: CHART_COLORS.text }, grid: { color: CHART_COLORS.grid } } } };
     fetch('api/static').then(r => r.json()).then(data => {
         const arr = Array.isArray(data) ? data : [];
-        const { screen, window } = staticScreenVsWindow(arr);
-        if (screen.length || window.length) {
-            new Chart(document.getElementById('chartScatter').getContext('2d'), {
-                type: 'scatter',
-                data: [
-                    { label: 'Physical screen sizes', data: screen, backgroundColor: CHART_COLORS.rose, borderColor: CHART_COLORS.rose, borderWidth: 1 },
-                    { label: 'Browser window sizes', data: window, backgroundColor: CHART_COLORS.primary, borderColor: CHART_COLORS.primary, borderWidth: 1 }
-                ],
-                options: { ...chartOpt, scales: { ...chartOpt.scales, x: { ...chartOpt.scales.x, title: { display: true, text: 'Width (px)', color: CHART_COLORS.text } }, y: { ...chartOpt.scales.y, title: { display: true, text: 'Height (px)', color: CHART_COLORS.text } } } }
-            });
-        }
         const feat = staticFeatureSupport(arr);
         new Chart(document.getElementById('chartFeature').getContext('2d'), {
             type: 'bar',
-            data: { labels: feat.labels, datasets: [{ label: '% enabled', data: feat.values, backgroundColor: CHART_COLORS.teal, borderColor: CHART_COLORS.teal, borderWidth: 1 }] },
+            data: { labels: feat.labels, datasets: [{ label: '% enabled', data: feat.values, backgroundColor: CHART_COLORS.indigo, borderColor: CHART_COLORS.violet, borderWidth: 1 }] },
             options: { ...chartOpt, scales: { ...chartOpt.scales, y: { ...chartOpt.scales.y, max: 100, title: { display: true, text: 'Percentage (%)', color: CHART_COLORS.text } } } }
         });
         const status = document.getElementById('tableStatus');
