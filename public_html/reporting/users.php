@@ -105,7 +105,7 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
                         <option value="super_admin">Super Admin</option>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3" id="add-sections-container" style="display: none;">
                     <label class="form-label d-block">Sections (analyst only)</label>
                     <label class="me-2"><input type="checkbox" name="sections[]" value="performance" class="form-check-input"> Performance</label>
                     <label class="me-2"><input type="checkbox" name="sections[]" value="behavioral" class="form-check-input"> Behavioral</label>
@@ -135,15 +135,19 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
                 <form method="post" class="d-inline" onsubmit="return confirm('Update this user?');">
                     <input type="hidden" name="action" value="update">
                     <input type="hidden" name="user_id" value="<?= (int) $u['id'] ?>">
-                    <select name="role" class="form-select form-select-sm d-inline-block w-auto">
+                    <select name="role" class="form-select form-select-sm d-inline-block w-auto update-role-select">
                         <option value="viewer" <?= $u['role'] === 'viewer' ? 'selected' : '' ?>>Viewer</option>
                         <option value="analyst" <?= $u['role'] === 'analyst' ? 'selected' : '' ?>>Analyst</option>
                         <option value="super_admin" <?= $u['role'] === 'super_admin' ? 'selected' : '' ?>>Super Admin</option>
                     </select>
+                    
                     <?php $uSections = $sections; ?>
-                    <label class="ms-2"><input type="checkbox" name="sections[]" value="performance" <?= in_array('performance', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> P</label>
-                    <label class="ms-1"><input type="checkbox" name="sections[]" value="behavioral" <?= in_array('behavioral', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> B</label>
-                    <label class="ms-1"><input type="checkbox" name="sections[]" value="static" <?= in_array('static', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> S</label>
+                    <span class="update-sections-container ms-2" style="<?= $u['role'] === 'analyst' ? '' : 'display: none;' ?>">
+                        <label><input type="checkbox" name="sections[]" value="performance" <?= in_array('performance', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> P</label>
+                        <label class="ms-1"><input type="checkbox" name="sections[]" value="behavioral" <?= in_array('behavioral', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> B</label>
+                        <label class="ms-1"><input type="checkbox" name="sections[]" value="static" <?= in_array('static', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> S</label>
+                    </span>
+                    
                     <button type="submit" class="btn btn-sm btn-outline-light ms-1">Update</button>
                 </form>
                 <?php if ((int) $u['id'] !== getCurrentUserId()): ?>
@@ -159,4 +163,33 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
         </tbody>
     </table>
 </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Handle the "Add User" form dropdown at the top
+    const addRoleSelect = document.getElementById('role');
+    const addSectionsContainer = document.getElementById('add-sections-container');
+    
+    if (addRoleSelect && addSectionsContainer) {
+        addRoleSelect.addEventListener('change', function() {
+            addSectionsContainer.style.display = (this.value === 'analyst') ? 'block' : 'none';
+        });
+        // Run once on load to set initial state
+        addRoleSelect.dispatchEvent(new Event('change'));
+    }
+
+    // 2. Handle all the "Update" form dropdowns in the table rows
+    const updateRoleSelects = document.querySelectorAll('.update-role-select');
+    updateRoleSelects.forEach(function(select) {
+        select.addEventListener('change', function() {
+            // Find the sections container that sits right next to this specific dropdown
+            const sectionsContainer = this.closest('form').querySelector('.update-sections-container');
+            if (sectionsContainer) {
+                sectionsContainer.style.display = (this.value === 'analyst') ? 'inline-block' : 'none';
+            }
+        });
+    });
+});
+</script>
+
 <?php require __DIR__ . '/includes/footer.php'; ?>

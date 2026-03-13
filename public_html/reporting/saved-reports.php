@@ -1,11 +1,14 @@
 <?php
 require_once __DIR__ . '/auth.php';
 requireLogin();
-$pageTitle = 'Saved Reports';
-require __DIR__ . '/includes/header.php';
 
 $pdo = getDb();
+// Calculate $createOk early so we can use it in the POST logic below
+$createOk = !canOnlyViewSavedReports() && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN);
 
+// 1. Process all POST requests and redirects BEFORE drawing any HTML
+
+// --- Handle Deletes ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete' && isset($_POST['report_id'])) {
     $reportId = (int) $_POST['report_id'];
     if ($reportId > 0 && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN)) {
@@ -13,7 +16,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $stmt->execute([$reportId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($row) {
+            // Delete associated comments first to avoid foreign key constraint errors
+            $pdo->prepare('DELETE FROM reporting_comments WHERE report_id = ?')->execute([$reportId]);
+            
+            // Delete the report itself
             $pdo->prepare('DELETE FROM reporting_saved_reports WHERE id = ?')->execute([$reportId]);
+            
             if (!empty($row['pdf_file'])) {
                 $path = __DIR__ . '/exports/' . basename($row['pdf_file']);
                 if (is_file($path)) {
@@ -28,9 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
-$reports = $pdo->query('SELECT r.id, r.title, r.slug, r.category, r.pdf_file, r.created_at, r.created_by, u.username AS created_by_name FROM reporting_saved_reports r JOIN reporting_users u ON r.created_by = u.id ORDER BY r.created_at DESC')->fetchAll(PDO::FETCH_ASSOC);
-
-$createOk = !canOnlyViewSavedReports() && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN);
+// --- Handle PDF Saves ---
 if ($createOk && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'], $_POST['category']) && (!isset($_POST['action']) || $_POST['action'] !== 'delete')) {
     $title = trim((string) $_POST['title']);
     $category = (string) $_POST['category'];
@@ -60,6 +66,12 @@ if ($createOk && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'],
         exit;
     }
 }
+
+// 2. NOW it is safe to load the HTML header and draw the page
+$pageTitle = 'Saved Reports';
+require __DIR__ . '/includes/header.php';
+
+$reports = $pdo->query('SELECT r.id, r.title, r.slug, r.category, r.pdf_file, r.created_at, r.created_by, u.username AS created_by_name FROM reporting_saved_reports r JOIN reporting_users u ON r.created_by = u.id ORDER BY r.created_at DESC')->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <main class="container py-4">
     <h1 class="h2 mb-4">Saved Reports</h1>
