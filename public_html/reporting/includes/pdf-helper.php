@@ -1,4 +1,5 @@
 <?php
+
 function pdfStaticFeatureSupport(array $rows): array
 {
     $features = ['cookiesEnabled', 'jsEnabled', 'imagesEnabled', 'cssEnabled'];
@@ -48,7 +49,8 @@ function pdfPerformanceLoadTimeOverTime(array $rows): array
     $values = array_map(function ($d) {
         return (int) round($d['sum'] / $d['n']);
     }, $byDate);
-    return ['labels' => $labels, 'values' => array_values($values)];}
+    return ['labels' => $labels, 'values' => array_values($values)];
+}
 
 function pdfActivityIdleVsActive(array $rows): array
 {
@@ -99,7 +101,7 @@ function pdfFetchChartImage(array $chartConfig): ?string
     return 'data:image/png;base64,' . base64_encode($img);
 }
 
-function buildReportHtml(string $category, string $title, ?int $savedId, \PDO $pdo): string
+function buildReportHtml(string $category, string $title, ?int $savedId, \PDO $pdo, string $analystComments = '', array $filters = []): string
 {
     require_once __DIR__ . '/comments.php';
     $apiType = $category === 'behavioral' ? 'activity' : $category;
@@ -108,12 +110,35 @@ function buildReportHtml(string $category, string $title, ?int $savedId, \PDO $p
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $comments = $savedId ? getReportComments($category, $savedId) : getReportComments($category);
 
+    $filterNames = [
+        'js_enabled' => 'JS Enabled',
+        'cookies_enabled' => 'Cookies Enabled',
+        'fast_load' => 'Load Time < 1000ms',
+        'idle_breaks' => 'Includes Idle Breaks'
+    ];
+    $niceFilters = [];
+    foreach ($filters as $f) {
+        $niceFilters[] = $filterNames[$f] ?? $f;
+    }
+    $filterText = empty($niceFilters) ? 'None' : htmlspecialchars(implode(', ', $niceFilters));
+
     $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' . htmlspecialchars($title) . '</title>';
     $html .= '<style>body{font-family:system-ui,sans-serif;margin:1rem;color:#333;} table{border-collapse:collapse;width:100%;} th,td{border:1px solid #ddd;padding:8px;text-align:left;} th{background:#eee;} .comment{margin:1rem 0;padding:0.5rem;background:#f5f5f5;} pre{font-size:10px;overflow-x:auto;white-space:pre-wrap;} .chart-img{max-width:100%;height:auto;margin:1rem 0;} h2{margin-top:1.5rem;}</style></head><body>';
     $html .= '<h1>' . htmlspecialchars($title) . '</h1>';
     $html .= '<p>Exported on ' . date('Y-m-d H:i:s') . ' — Category: ' . htmlspecialchars($category) . '</p>';
 
-    // Charts section
+    if ($analystComments !== '') {
+        $html .= '<div style="background:#eef2ff; padding:1rem; border-left:4px solid #6366f1; margin-bottom:1.5rem;">';
+        $html .= '<h3 style="margin-top:0;">Analyst Comments</h3>';
+        $html .= '<p style="margin-bottom:0;">' . nl2br(htmlspecialchars($analystComments)) . '</p>';
+        $html .= '</div>';
+    }
+
+    $html .= '<div style="background:#fffbeb; padding:1rem; border-left:4px solid #f59e0b; margin-bottom:1.5rem;">';
+    $html .= '<p style="margin:0;"><strong>Filters Applied to Data Table:</strong> ' . $filterText . '</p>';
+    $html .= '<p style="margin:5px 0 0 0; font-size:12px; color:#555;"><em>Please note that the charts below do not reflect any of the filters that were applied. Charts are based on the full dataset.</em></p>';
+    $html .= '</div>';
+
     $html .= '<h2>Visual analytics</h2>';
     if ($category === 'static') {
         $feat = pdfStaticFeatureSupport($rows);
@@ -168,12 +193,36 @@ function buildReportHtml(string $category, string $title, ?int $savedId, \PDO $p
         }
     }
 
-    $html .= '<h2>Data table</h2><table><thead><tr><th>ID</th><th>Received</th><th>Session</th><th>Payload</th></tr></thead><tbody>';
+    $filteredRows = [];
     foreach ($rows as $r) {
+        $pl = is_string($r['payload']) ? json_decode($r['payload'], true) : $r['payload'];
+        if (!is_array($pl)) { 
+            $filteredRows[] = $r; 
+            continue; 
+        }
+        
+        $keep = true;
+        if (in_array('js_enabled', $filters) && empty($pl['jsEnabled'])) $keep = false;
+        if (in_array('cookies_enabled', $filters) && empty($pl['cookiesEnabled'])) $keep = false;
+        if (in_array('fast_load', $filters)) {
+            $t = $pl['totalLoadTime'] ?? null;
+            if ($t === null && isset($pl['loadEventEnd'], $pl['startTime'])) $t = $pl['loadEventEnd'] - $pl['startTime'];
+            if (!$t || $t >= 1000) $keep = false;
+        }
+        if (in_array('idle_breaks', $filters) && ($pl['event'] ?? '') !== 'idle_break') $keep = false;
+
+        if ($keep) {
+            $filteredRows[] = $r;
+        }
+    }
+
+    $html .= '<h2>Data table</h2><table><thead><tr><th>ID</th><th>Received</th><th>Session</th><th>Payload</th></tr></thead><tbody>';
+    foreach ($filteredRows as $r) {
         $pl = is_string($r['payload']) ? $r['payload'] : json_encode(json_decode($r['payload'], true) ?: []);
         $html .= '<tr><td>' . (int) $r['id'] . '</td><td>' . htmlspecialchars($r['received_at'] ?? '') . '</td><td>' . htmlspecialchars($r['session_id'] ?? '') . '</td><td><pre>' . htmlspecialchars($pl) . '</pre></td></tr>';
     }
     $html .= '</tbody></table>';
+    
     $html .= '<h2>Section observations (analyst comments)</h2>';
     foreach ($comments as $c) {
         $html .= '<div class="comment"><small>' . htmlspecialchars($c['username'] . ' · ' . $c['created_at']) . '</small><p>' . nl2br(htmlspecialchars($c['comment_text'])) . '</p></div>';
@@ -185,9 +234,9 @@ function buildReportHtml(string $category, string $title, ?int $savedId, \PDO $p
     return $html;
 }
 
-function buildReportPdf(string $category, string $title, ?int $savedId, \PDO $pdo): array
+function buildReportPdf(string $category, string $title, ?int $savedId, \PDO $pdo, string $analystComments = '', array $filters = []): array
 {
-    $html = buildReportHtml($category, $title, $savedId, $pdo);
+    $html = buildReportHtml($category, $title, $savedId, $pdo, $analystComments, $filters);
     $pdfBytes = null;
     if (is_file(__DIR__ . '/../vendor/autoload.php')) {
         try {

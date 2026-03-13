@@ -33,11 +33,17 @@ $exportCategory = $commentCategory;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_report' && isset($_POST['report_title'], $_POST['type']) && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN)) {
     $title = trim((string) $_POST['report_title']);
     $saveType = (string) $_POST['type'];
+    $analystComments = trim((string) ($_POST['analyst_comments'] ?? ''));
+    $filtersJson = (string) ($_POST['filters'] ?? '[]');
+    $filters = json_decode($filtersJson, true) ?: [];
+
     if ($title !== '' && in_array($saveType, $allowedTypesForUser, true) && canAccessSection($typeToSection[$saveType])) {
         $cat = $saveType === 'activity' ? 'behavioral' : $saveType;
         $pdo = getDb();
         require_once __DIR__ . '/includes/pdf-helper.php';
-        $result = buildReportPdf($cat, $title, null, $pdo);
+        
+        $result = buildReportPdf($cat, $title, null, $pdo, $analystComments, $filters);
+        
         $slug = preg_replace('/[^a-z0-9-]/', '-', strtolower($title)) ?: 'report-' . time();
         $slug .= '-' . uniqid();
         $pdfFile = null;
@@ -80,33 +86,39 @@ require __DIR__ . '/includes/header.php';
 <main class="container py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <h1 class="h2 mb-0">Data Table</h1>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#saveReportModal">Export PDF</button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#saveReportModal">Generate Report</button>
     </div>
     <div class="modal fade" id="saveReportModal" tabindex="-1" aria-labelledby="saveReportModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content bg-secondary border-dark">
                 <div class="modal-header border-dark">
-                    <h5 class="modal-title text-light" id="saveReportModalLabel">Export PDF</h5>
+                    <h5 class="modal-title text-light" id="saveReportModalLabel">Generate & Save Report</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="post" action="table.php?type=<?= rawurlencode($currentType) ?>" id="saveReportForm">
                     <div class="modal-body">
                         <input type="hidden" name="action" value="save_report">
                         <input type="hidden" name="type" id="saveReportType" value="<?= htmlspecialchars($currentType) ?>">
-                        <label for="report_title" class="form-label text-light">Name for this report (PDF)</label>
+                        <input type="hidden" name="filters" id="saveReportFilters" value="[]">
+                        
+                        <label for="report_title" class="form-label text-light">Report Name</label>
                         <input type="text" name="report_title" id="report_title" class="form-control" required placeholder="e.g. Q1 Performance Summary" maxlength="255">
-                        <p class="small text-secondary mt-2 mb-0">Saves the same PDF you see when you click Preview PDF. It will appear on the Saved Reports page with a link to open it.</p>
+                        
+                        <label for="analyst_comments" class="form-label text-light mt-3">Analyst Comments</label>
+                        <textarea name="analyst_comments" id="analyst_comments" class="form-control" rows="4" placeholder="Add explanatory text to be printed on this report..."></textarea>
+                        
+                        <p class="small text-secondary mt-3 mb-0">This will generate a PDF with your applied filters and comments, and add it to the Saved Reports list.</p>
                     </div>
                     <div class="modal-footer border-dark">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save PDF to Saved Reports</button>
+                        <button type="submit" class="btn btn-primary">Generate PDF Report</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
     <div class="mb-4">
-        <label for="resourceSelect" class="form-label">Report:</label>
+        <label for="resourceSelect" class="form-label">Report Type:</label>
         <select id="resourceSelect" class="form-select" style="max-width: 220px;">
             <?php foreach ($allowedTypesForUser as $t): ?>
             <option value="<?= htmlspecialchars($t) ?>" <?= $currentType === $t ? 'selected' : '' ?>><?= $t === 'static' ? 'Static / Overview' : ($t === 'performance' ? 'Performance' : 'Behavioral (Activity)') ?></option>
@@ -146,7 +158,21 @@ require __DIR__ . '/includes/header.php';
 
     <div id="tableSection" class="card bg-secondary border-dark mb-4">
         <div class="card-body">
-            <h2 class="h6 card-title text-light">Data table</h2>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h6 card-title text-light mb-0">Data table</h2>
+            </div>
+            
+            <div id="filterSection" class="mb-3 p-3 bg-dark rounded border border-secondary d-none">
+                <div class="d-flex align-items-center flex-wrap gap-3">
+                    <strong class="text-light">Filters:</strong>
+                    <div id="filterCheckboxes" class="d-flex flex-wrap gap-3"></div>
+                </div>
+                <div class="text-warning small mt-2 d-flex align-items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-exclamation-triangle-fill me-1" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
+                    Please note that the chart will not reflect any of the filters that were applied.
+                </div>
+            </div>
+
             <div id="status" class="text-secondary">Loading data...</div>
             <div class="table-responsive d-none" id="tableWrap">
                 <table class="table table-dark table-striped mb-0">
@@ -193,6 +219,21 @@ document.getElementById('saveReportModal') && document.getElementById('saveRepor
     const chartOpt = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: CHART_COLORS.text } } }, scales: { x: { ticks: { color: CHART_COLORS.text }, grid: { color: CHART_COLORS.grid } }, y: { ticks: { color: CHART_COLORS.text }, grid: { color: CHART_COLORS.grid } } } };
     let chartInstances = { feature: null, line: null, stacked: null };
 
+    const filterDefinitions = {
+        'static': [
+            { id: 'js_enabled', label: 'JS Enabled' },
+            { id: 'cookies_enabled', label: 'Cookies Enabled' }
+        ],
+        'performance': [
+            { id: 'fast_load', label: 'Load Time < 1000ms' }
+        ],
+        'activity': [
+            { id: 'idle_breaks', label: 'Includes Idle Breaks' }
+        ]
+    };
+
+    let currentMasterData = [];
+
     function destroyCharts() {
         ['feature','line','stacked'].forEach(k => { if (chartInstances[k]) { chartInstances[k].destroy(); chartInstances[k] = null; } });
     }
@@ -203,14 +244,73 @@ document.getElementById('saveReportModal') && document.getElementById('saveRepor
         window.location = 'table.php?type=' + encodeURIComponent(this.value);
     });
 
-    async function loadData(resourceType) {
+    function setupFilters(type) {
+        const section = document.getElementById('filterSection');
+        const box = document.getElementById('filterCheckboxes');
+        box.innerHTML = '';
+        
+        if (!filterDefinitions[type] || filterDefinitions[type].length === 0) {
+            section.classList.add('d-none');
+            return;
+        }
+        
+        section.classList.remove('d-none');
+        filterDefinitions[type].forEach(f => {
+            box.innerHTML += `
+                <div class="form-check form-check-inline m-0">
+                    <input class="form-check-input data-filter" type="checkbox" value="${f.id}" id="filter_${f.id}">
+                    <label class="form-check-label text-light" style="cursor:pointer;" for="filter_${f.id}">${f.label}</label>
+                </div>
+            `;
+        });
+
+        document.querySelectorAll('.data-filter').forEach(cb => {
+            cb.addEventListener('change', updateTableAndFilters);
+        });
+    }
+
+    function updateTableAndFilters() {
+        const activeFilters = Array.from(document.querySelectorAll('.data-filter:checked')).map(cb => cb.value);
+        document.getElementById('saveReportFilters').value = JSON.stringify(activeFilters);
+
+        const filtered = currentMasterData.filter(r => {
+            let pl = typeof r.payload === 'object' ? r.payload : JSON.parse(r.payload || '{}');
+            
+            if (activeFilters.includes('js_enabled') && !pl.jsEnabled) return false;
+            if (activeFilters.includes('cookies_enabled') && !pl.cookiesEnabled) return false;
+            if (activeFilters.includes('fast_load')) {
+                let t = pl.totalLoadTime || (pl.loadEventEnd ? pl.loadEventEnd - pl.startTime : null) || (pl.timingObject ? pl.timingObject.loadEventEnd - pl.timingObject.startTime : null);
+                if (!t || t >= 1000) return false;
+            }
+            if (activeFilters.includes('idle_breaks') && pl.event !== 'idle_break') return false;
+            
+            return true;
+        });
+
         const status = document.getElementById('status');
-        const tableWrap = document.getElementById('tableWrap');
+        const wrap = document.getElementById('tableWrap');
         const content = document.getElementById('reportContent');
-        const apiType = resourceType === 'activity' ? 'activity' : resourceType;
-        status.textContent = 'Loading...';
-        tableWrap.classList.add('d-none');
         content.innerHTML = '';
+
+        if (filtered.length === 0) {
+            status.textContent = 'No records match the selected filters.';
+            status.classList.remove('d-none');
+            wrap.classList.add('d-none');
+        } else {
+            status.classList.add('d-none');
+            wrap.classList.remove('d-none');
+            filtered.forEach(r => {
+                const tr = document.createElement('tr');
+                const plStr = typeof r.payload === 'object' ? JSON.stringify(r.payload, null, 2) : (r.payload || '');
+                tr.innerHTML = '<td>' + escapeHtml(String(r.id)) + '</td><td>' + escapeHtml(String(r.received_at || '')) + '</td><td>' + escapeHtml(String(r.session_id || '')) + '</td><td><pre class="mb-0 small">' + escapeHtml(plStr) + '</pre></td>';
+                content.appendChild(tr);
+            });
+        }
+    }
+
+    async function loadData(resourceType) {
+        const apiType = resourceType === 'activity' ? 'activity' : resourceType;
+        document.getElementById('status').textContent = 'Loading...';
         document.querySelectorAll('[id^="chart"][id$="Wrap"]').forEach(el => el.classList.add('d-none'));
         destroyCharts();
 
@@ -220,7 +320,7 @@ document.getElementById('saveReportModal') && document.getElementById('saveRepor
             const arr = Array.isArray(data) ? data : [];
 
             if (arr.length === 0) {
-                status.textContent = 'No ' + resourceType + ' records.';
+                document.getElementById('status').textContent = 'No ' + resourceType + ' records.';
                 return;
             }
 
@@ -263,16 +363,12 @@ document.getElementById('saveReportModal') && document.getElementById('saveRepor
                 }
             }
 
-            status.classList.add('d-none');
-            tableWrap.classList.remove('d-none');
-            arr.forEach(r => {
-                const tr = document.createElement('tr');
-                const pl = typeof r.payload === 'object' ? JSON.stringify(r.payload, null, 2) : (r.payload || '');
-                tr.innerHTML = '<td>' + escapeHtml(String(r.id)) + '</td><td>' + escapeHtml(String(r.received_at || '')) + '</td><td>' + escapeHtml(String(r.session_id || '')) + '</td><td><pre class="mb-0 small">' + escapeHtml(pl) + '</pre></td>';
-                content.appendChild(tr);
-            });
+            currentMasterData = arr;
+            setupFilters(resourceType);
+            updateTableAndFilters();
+
         } catch (err) {
-            status.textContent = 'Error: ' + err.message;
+            document.getElementById('status').textContent = 'Error: ' + err.message;
         }
     }
 

@@ -6,6 +6,7 @@ requireLogin();
 
 $pdo = getDb();
 $createOk = !canOnlyViewSavedReports() && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete' && isset($_POST['report_id'])) {
     $reportId = (int) $_POST['report_id'];
     if ($reportId > 0 && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN)) {
@@ -32,13 +33,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         header('Location: saved-reports.php?deleted=1', true, 303);
         exit;
     }
-}if ($createOk && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'], $_POST['category']) && (!isset($_POST['action']) || $_POST['action'] !== 'delete')) {
+}
+
+if ($createOk && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'], $_POST['category']) && (!isset($_POST['action']) || $_POST['action'] !== 'delete')) {
     $title = trim((string) $_POST['title']);
     $category = (string) $_POST['category'];
+    $analystComments = trim((string) ($_POST['analyst_comments'] ?? ''));
     
     if ($title !== '' && in_array($category, ['performance', 'behavioral', 'static'], true) && canAccessSection($category)) {
         require_once __DIR__ . '/includes/pdf-helper.php';
-        $result = buildReportPdf($category, $title, null, $pdo);
+        $result = buildReportPdf($category, $title, null, $pdo, $analystComments, []);
+        
         $slug = preg_replace('/[^a-z0-9-]/', '-', strtolower($title)) ?: 'report-' . time();
         $slug .= '-' . uniqid();
         $pdfFile = null;
@@ -85,11 +90,15 @@ $reports = $pdo->query('SELECT r.id, r.title, r.slug, r.category, r.pdf_file, r.
         <div class="card-body">
             <h2 class="h5 card-title">Save report as PDF</h2>
             <form method="post" class="row g-2 align-items-end">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="title" class="form-label">Title</label>
-                    <input type="text" name="title" id="title" class="form-control" required placeholder="e.g. Q1 Performance Summary">
+                    <input type="text" name="title" id="title" class="form-control" required placeholder="e.g. Q1 Performance">
                 </div>
                 <div class="col-md-4">
+                    <label for="analyst_comments" class="form-label">Analyst Comments</label>
+                    <input type="text" name="analyst_comments" id="analyst_comments" class="form-control" placeholder="Optional context...">
+                </div>
+                <div class="col-md-3">
                     <label for="category" class="form-label">Category</label>
                     <select name="category" id="category" class="form-select">
                         <?php foreach (['performance' => 'Performance', 'behavioral' => 'Behavioral', 'static' => 'Static / Overview'] as $val => $label): ?>
@@ -97,7 +106,9 @@ $reports = $pdo->query('SELECT r.id, r.title, r.slug, r.category, r.pdf_file, r.
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-4"><button type="submit" class="btn btn-primary">Save PDF to list</button></div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Save PDF</button>
+                </div>
             </form>
         </div>
     </div>
