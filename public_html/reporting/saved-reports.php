@@ -97,8 +97,6 @@ $reports = $pdo->query('SELECT r.id, r.title, r.slug, r.category, r.pdf_file, r.
     </div>
     <?php endif; ?>
     <?php if (!empty($_GET['deleted'])): ?><div class="alert alert-info">Report deleted.</div><?php endif; ?>
-    <p class="text-secondary">Saved PDF reports. Each link opens the generated PDF (charts, data table, comments). Viewers can only open these; analysts can create and delete.</p>
-
     <?php if ($createOk): ?>
     <div class="card bg-secondary border-dark mb-4">
         <div class="card-body">
