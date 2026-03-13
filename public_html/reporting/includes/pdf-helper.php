@@ -53,8 +53,7 @@ function pdfPerformanceLoadTimeOverTime(array $rows): array
     $values = array_map(function ($d) {
         return (int) round($d['sum'] / $d['n']);
     }, $byDate);
-    return ['labels' => $labels, 'values' => $values];
-}
+    return ['labels' => $labels, 'values' => array_values($values)];}
 
 function pdfActivityIdleVsActive(array $rows): array
 {
