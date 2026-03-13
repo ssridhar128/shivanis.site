@@ -1,110 +1,197 @@
 <?php
 require_once __DIR__ . '/auth.php';
 requireLogin();
-$user = getCurrentUser();
+if (canOnlyViewSavedReports()) {
+    header('Location: 403.php');
+    exit;
+}
+$pageTitle = 'Data Table';
+require __DIR__ . '/includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Table – Analytics</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { font-family: system-ui, sans-serif; margin: 0; background: #1a1d29; color: #e4e6eb; min-height: 100vh; }
-        .header { background: #252836; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3f4556; }
-        .header h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
-        .nav { display: flex; gap: 1rem; align-items: center; }
-        .nav a { color: #a5b4fc; text-decoration: none; font-size: 0.95rem; }
-        .nav a:hover { text-decoration: underline; }
-        .nav .user { color: #9ca3af; font-size: 0.9rem; }
-        main { padding: 1.5rem; overflow-x: auto; }
-        .controls { background: #252836; padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #3f4556; }
-        .controls label { margin-right: 0.5rem; color: #9ca3af; }
-        select { padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid #3f4556; background: #1a1d29; color: #e4e6eb; font-size: 1rem; }
-        table { width: 100%; border-collapse: collapse; background: #252836; border-radius: 8px; overflow: hidden; border: 1px solid #3f4556; }
-        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #3f4556; }
-        th { background: #31344a; color: #a5b4fc; font-weight: 600; font-size: 0.9rem; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background: #2d3142; }
-        pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; font-size: 12px; color: #9ca3af; max-width: 400px; }
-        #status { color: #9ca3af; padding: 1rem; }
-        #reportTable { display: none; }
-    </style>
-</head>
-<body>
-    <header class="header">
-        <h1>Data Table</h1>
-        <nav class="nav">
-            <a href="reports.php">Dashboard</a>
-            <a href="table.php">Data Table</a>
-            <a href="charts.php">Charts</a>
-            <span class="user"><?= htmlspecialchars($user) ?></span>
-            <a href="logout.php">Log out</a>
-        </nav>
-    </header>
-    <main>
-        <div class="controls">
-            <label for="resourceSelect">Data type:</label>
-            <select id="resourceSelect" onchange="loadData(this.value)">
-                <option value="static">Static</option>
-                <option value="performance">Performance</option>
-                <option value="activity">Activity</option>
-            </select>
+<main class="container py-4">
+    <h1 class="h2 mb-4">Data Table</h1>
+    <div class="mb-4">
+        <label for="resourceSelect" class="form-label text-secondary">Data type</label>
+        <select id="resourceSelect" class="form-select form-select-lg bg-secondary text-light border-dark" style="max-width: 220px;">
+            <option value="static">Static</option>
+            <option value="performance">Performance</option>
+            <option value="activity">Activity</option>
+        </select>
+    </div>
+
+    <div id="chartsRow" class="row g-4 mb-4">
+        <div id="chartScatterWrap" class="col-lg-6 d-none">
+            <div class="card bg-secondary border-dark h-100">
+                <div class="card-body">
+                    <h2 class="h6 card-title text-light">Screen vs. Window Resolution</h2>
+                    <p class="small text-secondary mb-2">Physical screen sizes vs. browser window sizes (px).</p>
+                    <div style="height: 280px;"><canvas id="chartScatter"></canvas></div>
+                </div>
+            </div>
         </div>
-        <div id="status">Loading data...</div>
-        <table id="reportTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Received at</th>
-                    <th>Session ID</th>
-                    <th>Payload</th>
-                </tr>
-            </thead>
-            <tbody id="reportContent"></tbody>
-        </table>
-    </main>
-    <script>
-        async function loadData(resourceType) {
-            const table = document.getElementById('reportTable');
-            const content = document.getElementById('reportContent');
-            const status = document.getElementById('status');
-            content.innerHTML = '';
-            status.style.display = 'block';
-            status.textContent = 'Fetching ' + resourceType + ' data...';
-            table.style.display = 'none';
+        <div id="chartFeatureWrap" class="col-lg-6 d-none">
+            <div class="card bg-secondary border-dark h-100">
+                <div class="card-body">
+                    <h2 class="h6 card-title text-light">Browser Feature Support</h2>
+                    <p class="small text-secondary mb-2">% of sessions with feature enabled.</p>
+                    <div style="height: 280px;"><canvas id="chartFeature"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div id="chartLineWrap" class="col-12 d-none">
+            <div class="card bg-secondary border-dark">
+                <div class="card-body">
+                    <h2 class="h6 card-title text-light">Average Load Time Over Time</h2>
+                    <p class="small text-secondary mb-2">Mean load time (ms) by date.</p>
+                    <div style="height: 280px;"><canvas id="chartLine"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div id="chartStackedWrap" class="col-lg-6 d-none">
+            <div class="card bg-secondary border-dark h-100">
+                <div class="card-body">
+                    <h2 class="h6 card-title text-light">Idle Time vs. Active Time</h2>
+                    <p class="small text-secondary mb-2">Per session (seconds).</p>
+                    <div style="height: 280px;"><canvas id="chartStacked"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div id="chartBubbleWrap" class="col-lg-6 d-none">
+            <div class="card bg-secondary border-dark h-100">
+                <div class="card-body">
+                    <h2 class="h6 card-title text-light">Session Engagement Hotspots</h2>
+                    <p class="small text-secondary mb-2">Click / scroll / mousemove positions (px).</p>
+                    <div style="height: 280px;"><canvas id="chartBubble"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            try {
-                const response = await fetch('api/' + resourceType);
-                const data = await response.json();
+    <div id="tableSection" class="card bg-secondary border-dark">
+        <div class="card-body">
+            <h2 class="h6 card-title text-light">Data table</h2>
+            <div id="status" class="text-secondary">Loading data...</div>
+            <div class="table-responsive d-none" id="tableWrap">
+                <table class="table table-dark table-striped mb-0">
+                    <thead><tr><th>ID</th><th>Received at</th><th>Session ID</th><th>Payload</th></tr></thead>
+                    <tbody id="reportContent"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="js/chart-data.js"></script>
+<script>
+(function() {
+    const chartOpt = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: CHART_COLORS.text } } }, scales: { x: { ticks: { color: CHART_COLORS.text }, grid: { color: CHART_COLORS.grid } }, y: { ticks: { color: CHART_COLORS.text }, grid: { color: CHART_COLORS.grid } } } };
+    let chartInstances = { scatter: null, feature: null, line: null, stacked: null, bubble: null };
 
-                if (!Array.isArray(data) || data.length === 0) {
-                    status.textContent = 'No ' + resourceType + ' records in the database.';
-                    return;
-                }
+    function destroyCharts() {
+        ['scatter','feature','line','stacked','bubble'].forEach(k => { if (chartInstances[k]) { chartInstances[k].destroy(); chartInstances[k] = null; } });
+    }
 
-                data.forEach(function(row) {
-                    const tr = document.createElement('tr');
-                    const payloadStr = typeof row.payload === 'object' ? JSON.stringify(row.payload, null, 2) : (row.payload || '');
-                    tr.innerHTML = '<td>' + escapeHtml(String(row.id)) + '</td><td>' + escapeHtml(String(row.received_at)) + '</td><td>' + escapeHtml(String(row.session_id)) + '</td><td><pre>' + escapeHtml(payloadStr) + '</pre></td>';
-                    content.appendChild(tr);
-                });
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-                status.style.display = 'none';
-                table.style.display = 'table';
-            } catch (err) {
-                status.textContent = 'Error loading data: ' + err.message;
+    async function loadData(resourceType) {
+        const status = document.getElementById('status');
+        const tableWrap = document.getElementById('tableWrap');
+        const content = document.getElementById('reportContent');
+        const apiType = resourceType === 'activity' ? 'activity' : resourceType;
+        status.textContent = 'Loading...';
+        tableWrap.classList.add('d-none');
+        content.innerHTML = '';
+        document.querySelectorAll('[id^="chart"][id$="Wrap"]').forEach(el => el.classList.add('d-none'));
+        destroyCharts();
+
+        try {
+            const res = await fetch('api/' + apiType);
+            const data = await res.json();
+            const arr = Array.isArray(data) ? data : [];
+
+            if (arr.length === 0) {
+                status.textContent = 'No ' + resourceType + ' records.';
+                return;
             }
-        }
 
-        function escapeHtml(s) {
-            const div = document.createElement('div');
-            div.textContent = s;
-            return div.innerHTML;
-        }
+            if (resourceType === 'static') {
+                const { screen, window } = staticScreenVsWindow(arr);
+                if (screen.length || window.length) {
+                    document.getElementById('chartScatterWrap').classList.remove('d-none');
+                    const ctx = document.getElementById('chartScatter').getContext('2d');
+                    chartInstances.scatter = new Chart(ctx, {
+                        type: 'scatter',
+                        data: [
+                            { label: 'Physical screen sizes', data: screen, backgroundColor: CHART_COLORS.rose, borderColor: CHART_COLORS.rose, borderWidth: 1 },
+                            { label: 'Browser window sizes', data: window, backgroundColor: CHART_COLORS.primary, borderColor: CHART_COLORS.primary, borderWidth: 1 }
+                        ],
+                        options: { ...chartOpt, scales: { ...chartOpt.scales, x: { ...chartOpt.scales.x, title: { display: true, text: 'Width (px)', color: CHART_COLORS.text } }, y: { ...chartOpt.scales.y, title: { display: true, text: 'Height (px)', color: CHART_COLORS.text } } } }
+                    });
+                }
+                const feat = staticFeatureSupport(arr);
+                document.getElementById('chartFeatureWrap').classList.remove('d-none');
+                const ctxF = document.getElementById('chartFeature').getContext('2d');
+                chartInstances.feature = new Chart(ctxF, {
+                    type: 'bar',
+                    data: { labels: feat.labels, datasets: [{ label: '% enabled', data: feat.values, backgroundColor: CHART_COLORS.teal, borderColor: CHART_COLORS.teal, borderWidth: 1 }] },
+                    options: { ...chartOpt, scales: { ...chartOpt.scales, y: { ...chartOpt.scales.y, max: 100, title: { display: true, text: 'Percentage (%)', color: CHART_COLORS.text } } } }
+                });
+            } else if (resourceType === 'performance') {
+                const lt = performanceLoadTimeOverTime(arr);
+                if (lt.labels.length) {
+                    document.getElementById('chartLineWrap').classList.remove('d-none');
+                    const ctx = document.getElementById('chartLine').getContext('2d');
+                    chartInstances.line = new Chart(ctx, {
+                        type: 'line',
+                        data: { labels: lt.labels, datasets: [{ label: 'Total load time (ms)', data: lt.values, borderColor: CHART_COLORS.teal, backgroundColor: 'rgba(20, 184, 166, 0.1)', fill: true, tension: 0.2 }] },
+                        options: { ...chartOpt, scales: { ...chartOpt.scales, y: { ...chartOpt.scales.y, title: { display: true, text: 'Milliseconds (ms)', color: CHART_COLORS.text } } } }
+                    });
+                }
+            } else if (resourceType === 'activity') {
+                const idleActive = activityIdleVsActive(arr);
+                if (idleActive.labels.length) {
+                    document.getElementById('chartStackedWrap').classList.remove('d-none');
+                    const ctx = document.getElementById('chartStacked').getContext('2d');
+                    chartInstances.stacked = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: idleActive.labels,
+                            datasets: [
+                                { label: 'Active time (s)', data: idleActive.activeData, backgroundColor: CHART_COLORS.teal, borderColor: CHART_COLORS.teal, borderWidth: 1 },
+                                { label: 'Idle time (s)', data: idleActive.idleData, backgroundColor: CHART_COLORS.amber, borderColor: CHART_COLORS.amber, borderWidth: 1 }
+                            ]
+                        },
+                        options: { ...chartOpt, scales: { x: { ...chartOpt.scales.x, stacked: true, title: { display: true, text: 'Session ID', color: CHART_COLORS.text } }, y: { ...chartOpt.scales.y, stacked: true, title: { display: true, text: 'Time (seconds)', color: CHART_COLORS.text } } } }
+                    });
+                }
+                const hotspots = activityEngagementHotspots(arr);
+                if (hotspots.length) {
+                    document.getElementById('chartBubbleWrap').classList.remove('d-none');
+                    const bubbleData = hotspots.slice(0, 200).map(p => ({ x: p.x, y: p.y, r: 4 }));
+                    const ctxB = document.getElementById('chartBubble').getContext('2d');
+                    chartInstances.bubble = new Chart(ctxB, {
+                        type: 'bubble',
+                        data: [{ label: 'Activity hotspots', data: bubbleData, backgroundColor: 'rgba(244, 63, 94, 0.5)', borderColor: CHART_COLORS.rose, borderWidth: 1 }],
+                        options: { ...chartOpt, scales: { ...chartOpt.scales, x: { ...chartOpt.scales.x, title: { display: true, text: 'X (px)', color: CHART_COLORS.text } }, y: { ...chartOpt.scales.y, title: { display: true, text: 'Y (px)', color: CHART_COLORS.text } } } }
+                    });
+                }
+            }
 
-        loadData('static');
-    </script>
-</body>
-</html>
+            status.classList.add('d-none');
+            tableWrap.classList.remove('d-none');
+            arr.forEach(r => {
+                const tr = document.createElement('tr');
+                const pl = typeof r.payload === 'object' ? JSON.stringify(r.payload, null, 2) : (r.payload || '');
+                tr.innerHTML = '<td>' + escapeHtml(String(r.id)) + '</td><td>' + escapeHtml(String(r.received_at || '')) + '</td><td>' + escapeHtml(String(r.session_id || '')) + '</td><td><pre class="mb-0 small">' + escapeHtml(pl) + '</pre></td>';
+                content.appendChild(tr);
+            });
+        } catch (err) {
+            status.textContent = 'Error: ' + err.message;
+        }
+    }
+
+    document.getElementById('resourceSelect').addEventListener('change', function() { loadData(this.value); });
+    loadData('static');
+})();
+</script>
+<?php require __DIR__ . '/includes/footer.php'; ?>

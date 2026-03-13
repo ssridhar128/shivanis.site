@@ -6,12 +6,21 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = trim($_POST['username'] ?? '');
     $pass = $_POST['password'] ?? '';
-    if (checkCredentials($user, $pass)) {
-        $_SESSION['user'] = $user;
+    $info = $user !== '' ? verifyCredentials($user, $pass) : null;
+    if ($info !== null) {
+        $_SESSION['user_id']  = $info['id'];
+        $_SESSION['user']     = $info['username'];
+        $_SESSION['role']     = $info['role'];
+        $_SESSION['sections'] = $info['sections'] ?? null;
         $redirect = $_GET['redirect'] ?? 'reports.php';
         $redirect = preg_replace('#^/+|\.\./#', '', $redirect) ?: 'reports.php';
-        if (!in_array($redirect, ['reports.php', 'table.php', 'charts.php'], true)) {
+        $allowed = ['reports.php', 'table.php', 'charts.php', 'saved-reports.php', 'view-report.php', 'report-performance.php', 'report-behavioral.php', 'report-static.php', 'users.php', 'export-pdf.php'];
+        $base = strtok($redirect, '?');
+        if (!in_array($base, $allowed, true)) {
             $redirect = 'reports.php';
+        }
+        if (canOnlyViewSavedReports()) {
+            $redirect = 'saved-reports.php';
         }
         header('Location: ' . $redirect);
         exit;
@@ -20,7 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (getCurrentUser() !== null) {
-    header('Location: reports.php');
+    $dest = canOnlyViewSavedReports() ? 'saved-reports.php' : 'reports.php';
+    header('Location: ' . $dest);
     exit;
 }
 ?>
@@ -30,31 +40,22 @@ if (getCurrentUser() !== null) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login – Analytics Reporting</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { font-family: system-ui, sans-serif; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #1a1d29; color: #e4e6eb; }
-        .card { background: #252836; padding: 2rem; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); width: 100%; max-width: 360px; }
-        h1 { margin: 0 0 1.5rem 0; font-size: 1.35rem; font-weight: 600; }
-        label { display: block; margin-bottom: 0.35rem; font-size: 0.9rem; color: #9ca3af; }
-        input[type="text"], input[type="password"] { width: 100%; padding: 0.65rem 0.75rem; margin-bottom: 1rem; border: 1px solid #3f4556; border-radius: 6px; background: #1a1d29; color: #e4e6eb; font-size: 1rem; }
-        input:focus { outline: none; border-color: #6366f1; }
-        .error { color: #f87171; font-size: 0.9rem; margin-bottom: 1rem; }
-        button { width: 100%; padding: 0.75rem; background: #6366f1; color: white; border: none; border-radius: 6px; font-size: 1rem; font-weight: 500; cursor: pointer; }
-        button:hover { background: #4f46e5; }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="card">
-        <h1>Analytics Reporting</h1>
-        <p style="margin:0 0 1rem 0; color:#9ca3af; font-size:0.9rem;">Sign in to view reports.</p>
-        <?php if ($error): ?><p class="error"><?= htmlspecialchars($error) ?></p><?php endif; ?>
-        <form method="post" action="login.php<?= isset($_GET['redirect']) ? '?redirect=' . htmlspecialchars($_GET['redirect']) : '' ?>">
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" autocomplete="username" required autofocus>
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" autocomplete="current-password" required>
-            <button type="submit">Sign in</button>
-        </form>
+<body class="bg-dark text-light min-vh-100 d-flex align-items-center justify-content-center">
+    <div class="card bg-secondary border-dark" style="width: 100%; max-width: 360px;">
+        <div class="card-body">
+            <h1 class="h4 card-title mb-3">Analytics Reporting</h1>
+            <p class="text-secondary small mb-3">Sign in to view reports.</p>
+            <?php if ($error): ?><div class="alert alert-danger py-2"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+            <form method="post" action="login.php<?= isset($_GET['redirect']) ? '?redirect=' . htmlspecialchars($_GET['redirect']) : '' ?>">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" id="username" name="username" class="form-control bg-dark text-light border-dark mb-2" autocomplete="username" required autofocus>
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" name="password" class="form-control bg-dark text-light border-dark mb-3" autocomplete="current-password" required>
+                <button type="submit" class="btn btn-primary w-100">Sign in</button>
+            </form>
+        </div>
     </div>
 </body>
 </html>

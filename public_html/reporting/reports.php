@@ -1,60 +1,54 @@
 <?php
 require_once __DIR__ . '/auth.php';
 requireLogin();
-$user = getCurrentUser();
+$pageTitle = 'Dashboard';
+require __DIR__ . '/includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports – Analytics</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { font-family: system-ui, sans-serif; margin: 0; background: #1a1d29; color: #e4e6eb; min-height: 100vh; }
-        .header { background: #252836; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3f4556; }
-        .header h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
-        .nav { display: flex; gap: 1rem; align-items: center; }
-        .nav a { color: #a5b4fc; text-decoration: none; font-size: 0.95rem; }
-        .nav a:hover { text-decoration: underline; }
-        .nav .user { color: #9ca3af; font-size: 0.9rem; }
-        main { padding: 2rem 1.5rem; max-width: 800px; margin: 0 auto; }
-        h2 { margin: 0 0 1rem 0; font-size: 1.1rem; font-weight: 600; color: #d1d5db; }
-        .cards { display: grid; gap: 1rem; }
-        .card { background: #252836; border-radius: 10px; padding: 1.25rem; border: 1px solid #3f4556; text-decoration: none; color: inherit; display: block; transition: border-color 0.2s; }
-        .card:hover { border-color: #6366f1; }
-        .card h3 { margin: 0 0 0.35rem 0; font-size: 1rem; color: #e4e6eb; }
-        .card p { margin: 0; font-size: 0.9rem; color: #9ca3af; }
-    </style>
-</head>
-<body>
-    <header class="header">
-        <h1>Analytics Reporting</h1>
-        <nav class="nav">
-            <a href="reports.php">Dashboard</a>
-            <a href="table.php">Data Table</a>
-            <a href="charts.php">Charts</a>
-            <span class="user"><?= htmlspecialchars($user) ?></span>
-            <a href="logout.php">Log out</a>
-        </nav>
-    </header>
-    <main>
-        <h2>Dashboard</h2>
-        <p style="color:#9ca3af; margin-bottom:1.5rem;">Select a report below. Protected pages (Table, Charts) require authentication</p>
-        <div class="cards">
-            <a class="card" href="index.html">
-                <h3>Dashboard (This is the table I made for the last hw to show my data)</h3>
-                <p>Main analytics dashboard with data table from the database (index.html).</p>
-            </a>
-            <a class="card" href="table.php">
-                <h3>Data Table (protected)</h3>
-                <p>This is the data table I made for this HW by converting my last hw html to php so that it is password protected.</p>
-            </a>
-            <a class="card" href="charts.php">
-                <h3>Charts (protected)</h3>
-                <p>This is the charts page I made for this HW using Chart.js. Hover over the points on the line graph and the bars on the bar chart for more info.</p>
+<main class="container py-4">
+    <h1 class="h2 mb-4">Dashboard</h1>
+    <p class="text-secondary mb-4">Select a report below. Access to sections depends on your role.</p>
+    <div class="row g-3">
+        <?php if (!canOnlyViewSavedReports()): ?>
+            <?php if (canAccessSection('performance')): ?>
+            <div class="col-md-6 col-lg-4">
+                <a href="report-performance.php" class="card text-decoration-none text-dark h-100 border-secondary hover-shadow">
+                    <div class="card-body">
+                        <h2 class="h5 card-title">Performance Report</h2>
+                        <p class="card-text text-secondary small">Metrics from the collector: load times, resource timing, and performance events.</p>
+                    </div>
+                </a>
+            </div>
+            <?php endif; ?>
+            <?php if (canAccessSection('behavioral')): ?>
+            <div class="col-md-6 col-lg-4">
+                <a href="report-behavioral.php" class="card text-decoration-none text-dark h-100 border-secondary hover-shadow">
+                    <div class="card-body">
+                        <h2 class="h5 card-title">Behavioral Report</h2>
+                        <p class="card-text text-secondary small">User activity and interaction events from the collector.</p>
+                    </div>
+                </a>
+            </div>
+            <?php endif; ?>
+            <?php if (canAccessSection('static')): ?>
+            <div class="col-md-6 col-lg-4">
+                <a href="report-static.php" class="card text-decoration-none text-dark h-100 border-secondary hover-shadow">
+                    <div class="card-body">
+                        <h2 class="h5 card-title">Static / Overview</h2>
+                        <p class="card-text text-secondary small">Static context and overview of collected data.</p>
+                    </div>
+                </a>
+            </div>
+            <?php endif; ?>
+        <?php endif; ?>
+        <div class="col-md-6 col-lg-4">
+            <a href="saved-reports.php" class="card text-decoration-none text-dark h-100 border-secondary hover-shadow">
+                <div class="card-body">
+                    <h2 class="h5 card-title">Saved Reports</h2>
+                    <p class="card-text text-secondary small">View and manage saved report views.</p>
+                </div>
             </a>
         </div>
-    </main>
-</body>
-</html>
+    </div>
+</main>
+<style>.hover-shadow:hover { box-shadow: 0 .5rem 1rem rgba(0,0,0,.25); }</style>
+<?php require __DIR__ . '/includes/footer.php'; ?>
