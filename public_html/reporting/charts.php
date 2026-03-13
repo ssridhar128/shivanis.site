@@ -72,8 +72,6 @@ require __DIR__ . '/includes/header.php';
 <script>
 (function() {
     const chartOpt = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: CHART_COLORS.text } } }, scales: { x: { ticks: { color: CHART_COLORS.text }, grid: { color: CHART_COLORS.grid } }, y: { ticks: { color: CHART_COLORS.text }, grid: { color: CHART_COLORS.grid } } } };
-    
-    // Custom options for the Pie chart (no X/Y axes needed)
     const pieOpt = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: CHART_COLORS.text } } } };
 
     async function loadAll() {
@@ -84,16 +82,12 @@ require __DIR__ . '/includes/header.php';
         const arrS = Array.isArray(staticData) ? staticData : [];
         const arrP = Array.isArray(perfData) ? perfData : [];
         const arrA = Array.isArray(activityData) ? activityData : [];
-
-        // 1. Browser Feature Support
         const feat = staticFeatureSupport(arrS);
         new Chart(document.getElementById('chartFeature').getContext('2d'), {
             type: 'bar',
             data: { labels: feat.labels, datasets: [{ label: '% enabled', data: feat.values, backgroundColor: CHART_COLORS.indigo, borderColor: CHART_COLORS.violet, borderWidth: 1 }] },
             options: { ...chartOpt, scales: { ...chartOpt.scales, y: { ...chartOpt.scales.y, max: 100, title: { display: true, text: 'Percentage (%)', color: CHART_COLORS.text } } } }
         });
-
-        // 2. Average Load Time
         const lt = performanceLoadTimeOverTime(arrP);
         if (lt.labels.length) {
             new Chart(document.getElementById('chartLine').getContext('2d'), {
@@ -104,8 +98,6 @@ require __DIR__ . '/includes/header.php';
         } else {
             document.getElementById('chartLine').parentElement.innerHTML = '<p class="text-secondary small">No performance data by date.</p>';
         }
-
-        // 3. Idle vs Active Time
         const idleActive = activityIdleVsActive(arrA);
         if (idleActive.labels.length) {
             new Chart(document.getElementById('chartStacked').getContext('2d'), {
@@ -122,8 +114,6 @@ require __DIR__ . '/includes/header.php';
         } else {
             document.getElementById('chartStacked').parentElement.innerHTML = '<p class="text-secondary small">No activity data by session.</p>';
         }
-
-        // 4. Events over time (Restored from old code)
         const all = [].concat(arrS).concat(arrP).concat(arrA);
         const byDate = {};
         const now = new Date();
@@ -157,8 +147,6 @@ require __DIR__ . '/includes/header.php';
             },
             options: chartOpt
         });
-
-        // 5. Events by type (Converted to Pie Chart)
         const counts = [arrS.length, arrP.length, arrA.length];
         new Chart(document.getElementById('chartCounts').getContext('2d'), {
             type: 'pie',
@@ -167,7 +155,7 @@ require __DIR__ . '/includes/header.php';
                 datasets: [{ 
                     data: counts, 
                     backgroundColor: [CHART_COLORS.indigo, CHART_COLORS.primary, CHART_COLORS.violet], 
-                    borderColor: '#252836', // Matches your dark theme card background
+                    borderColor: '#252836',
                     borderWidth: 2 
                 }] 
             },

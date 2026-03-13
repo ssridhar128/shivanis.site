@@ -5,8 +5,6 @@ requireSuperAdmin();
 $pdo = getDb();
 $message = '';
 $error = '';
-
-// Process all POST requests and redirects BEFORE drawing any HTML
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
@@ -19,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sections = json_encode(array_values(array_intersect($_POST['sections'], ['performance', 'behavioral', 'static'])));
         }
         if ($role === 'analyst' && ($sections === null || $sections === '[]')) {
-            $sections = null; // null = all sections
+            $sections = null;
         }
         if ($username !== '' && strlen($password) >= 6 && in_array($role, ['super_admin', 'analyst', 'viewer'], true)) {
             try {
@@ -35,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'update' && isset($_POST['user_id'])) {
         $userId = (int) $_POST['user_id'];
         
-        // Check if the target is the protected grader account
         $stmtCheck = $pdo->prepare('SELECT username FROM reporting_users WHERE id = ?');
         $stmtCheck->execute([$userId]);
         $targetUser = $stmtCheck->fetch(PDO::FETCH_ASSOC);
@@ -60,7 +57,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'delete' && isset($_POST['user_id'])) {
         $userId = (int) $_POST['user_id'];
         
-        // Check if the target is the protected grader account
         $stmtCheck = $pdo->prepare('SELECT username FROM reporting_users WHERE id = ?');
         $stmtCheck->execute([$userId]);
         $targetUser = $stmtCheck->fetch(PDO::FETCH_ASSOC);
@@ -89,7 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// NOW we can safely include the header and draw the page
 $pageTitle = 'User management';
 require __DIR__ . '/includes/header.php';
 
@@ -215,7 +210,6 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. Handle the "Add User" form dropdown at the top
     const addRoleSelect = document.getElementById('role');
     const addSectionsContainer = document.getElementById('add-sections-container');
     
@@ -226,7 +220,6 @@ document.addEventListener('DOMContentLoaded', function() {
         addRoleSelect.dispatchEvent(new Event('change'));
     }
 
-    // 2. Handle all the "Update" form dropdowns in the table rows
     const updateRoleSelects = document.querySelectorAll('.update-role-select');
     updateRoleSelects.forEach(function(select) {
         select.addEventListener('change', function() {

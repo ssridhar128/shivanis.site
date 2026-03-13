@@ -1,5 +1,4 @@
 <?php
-// Include this after defining $comments. For report pages: analyst comments with user name, date, time (persistent).
 ?>
 <section class="card bg-secondary border-dark mb-4">
     <div class="card-body">

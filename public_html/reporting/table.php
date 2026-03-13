@@ -7,11 +7,9 @@ if (canOnlyViewSavedReports()) {
     exit;
 }
 
-// Map dropdown type to section for access check. Activity = behavioral section.
 $typeToSection = ['static' => 'static', 'performance' => 'performance', 'activity' => 'behavioral'];
 $allTypes = ['static', 'performance', 'activity'];
 
-// Only show types the user is allowed to see (analyst section restriction).
 $allowedTypesForUser = [];
 foreach ($allTypes as $t) {
     if (canAccessSection($typeToSection[$t])) {
@@ -30,9 +28,8 @@ if (!in_array($requestedType, $allowedTypesForUser, true)) {
 }
 $currentType = $requestedType;
 $commentCategory = $currentType === 'activity' ? 'behavioral' : $currentType;
-$exportCategory = $commentCategory; // for Export PDF link
+$exportCategory = $commentCategory;
 
-// Save as PDF from Data Table: prompt name → generate PDF, save file, add to Saved Reports list
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_report' && isset($_POST['report_title'], $_POST['type']) && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN)) {
     $title = trim((string) $_POST['report_title']);
     $saveType = (string) $_POST['type'];
@@ -85,7 +82,6 @@ require __DIR__ . '/includes/header.php';
         <h1 class="h2 mb-0">Data Table</h1>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#saveReportModal">Export PDF</button>
     </div>
-    <!-- Modal: name this PDF and save to Saved Reports (same content as Export PDF) -->
     <div class="modal fade" id="saveReportModal" tabindex="-1" aria-labelledby="saveReportModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content bg-secondary border-dark">

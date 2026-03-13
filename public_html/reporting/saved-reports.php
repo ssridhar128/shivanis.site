@@ -1,5 +1,4 @@
 <?php
-// Start output buffering to trap ANY stray warnings or spaces so they don't break redirects!
 ob_start(); 
 
 require_once __DIR__ . '/auth.php';
@@ -7,10 +6,6 @@ requireLogin();
 
 $pdo = getDb();
 $createOk = !canOnlyViewSavedReports() && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN);
-
-// 1. Process all POST requests and redirects BEFORE drawing any HTML
-
-// --- Handle Deletes ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete' && isset($_POST['report_id'])) {
     $reportId = (int) $_POST['report_id'];
     if ($reportId > 0 && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN)) {
@@ -19,14 +14,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($row) {
-            // Wrap in a try/catch so a mismatched table name doesn't crash the page
             try {
                 $pdo->prepare('DELETE FROM reporting_comments WHERE report_id = ?')->execute([$reportId]);
             } catch (Throwable $e) {
-                // Silently continue if the table name is different
+
             }
-            
-            // Delete the report itself
             $pdo->prepare('DELETE FROM reporting_saved_reports WHERE id = ?')->execute([$reportId]);
             
             if (!empty($row['pdf_file'])) {
@@ -36,16 +28,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
             }
         }
-        
-        // Clear the buffer trap and force a clean GET redirect
         ob_end_clean();
         header('Location: saved-reports.php?deleted=1', true, 303);
         exit;
     }
-}
-
-// --- Handle PDF Saves ---
-if ($createOk && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'], $_POST['category']) && (!isset($_POST['action']) || $_POST['action'] !== 'delete')) {
+}if ($createOk && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'], $_POST['category']) && (!isset($_POST['action']) || $_POST['action'] !== 'delete')) {
     $title = trim((string) $_POST['title']);
     $category = (string) $_POST['category'];
     
@@ -73,15 +60,11 @@ if ($createOk && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'],
         $newId = (int) $pdo->lastInsertId();
         
         $pdfPath = $pdfFile ? ('exports/' . $pdfFile) : '';
-        
-        // Clear the buffer trap and force a clean GET redirect
         ob_end_clean();
         header('Location: saved-reports.php?saved=1&name=' . rawurlencode($title) . '&id=' . $newId . ($pdfPath ? '&path=' . rawurlencode($pdfPath) : ''), true, 303);
         exit;
     }
 }
-
-// 2. NOW it is safe to load the HTML header and draw the page
 $pageTitle = 'Saved Reports';
 require __DIR__ . '/includes/header.php';
 

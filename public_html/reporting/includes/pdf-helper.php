@@ -1,9 +1,4 @@
 <?php
-/**
- * Build report PDF with charts (via QuickChart), data tables, and comments.
- * Used by export-pdf.php and the save-as-PDF flow (table.php, saved-reports.php).
- */
-
 function pdfStaticFeatureSupport(array $rows): array
 {
     $features = ['cookiesEnabled', 'jsEnabled', 'imagesEnabled', 'cssEnabled'];
@@ -203,7 +198,6 @@ function buildReportPdf(string $category, string $title, ?int $savedId, \PDO $pd
             $dompdf->render();
             $pdfBytes = $dompdf->output();
         } catch (Throwable $e) {
-            // leave pdfBytes null
         }
     }
     return ['html' => $html, 'pdf' => $pdfBytes];

@@ -18,9 +18,7 @@ if (!$report) {
     exit;
 }
 
-// Viewers can only view saved reports. Analysts/super_admin can view if they have section access.
 if (canOnlyViewSavedReports()) {
-    // Viewer: allow
 } elseif (!canAccessSection($report['category'])) {
     header('Location: 403.php');
     exit;
@@ -36,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment_text']) && (g
 
 $pageTitle = $report['title'];
 $category = $report['category'];
-$apiType = $category === 'behavioral' ? 'activity' : $category; // API uses "activity", we use "behavioral"
+$apiType = $category === 'behavioral' ? 'activity' : $category; 
 require __DIR__ . '/includes/header.php';
 ?>
 <main class="container py-4">

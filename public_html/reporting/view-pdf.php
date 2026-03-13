@@ -1,7 +1,4 @@
 <?php
-/**
- * Serve a saved report PDF by id. Checks auth; viewers can open saved reports.
- */
 require_once __DIR__ . '/auth.php';
 requireLogin();
 
