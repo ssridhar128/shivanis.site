@@ -12,12 +12,12 @@
     Static/Overview at the moment this will let you go to the other pages. Scroll all the way to the
     bottom to leave and see all of the comments. At the top of the page there is a graph for each of the
     sections. Make sure you hover over the dots or the bars to see more infomation. Click Export PDF on
-    some or all of the pages to save reports.
+    some or all of the pages to save reports. When you do this it will prompt you to leave an analyst comment. This will show up on the pdf that is saved in the saved reports. We will explore that later so for now just believe me.
     * Go to the charts page to see all of the charts that are on all of the pages. Hover over parts to see
     the interactivity
     * Go to the Saved Reports page to see all of the reports as well as the ones you just made. Click in 
     to see the charts on the pdf as well as the data table. Scroll all the way to the bottom to see the 
-    comments analysts or super_admins have made so far. Click delete on any of the reports that have
+    comments analysts or super_admins have made so far. Go to the Behavioral First Report and Static Overview First Report to see analyst comments on no filters applied report. Go to Performance First PDF to see no analyst comments on a no filters applied report. Go to Load time < 1000ms to see filters applied and comment left. Click delete on any of the reports that have
     already been made or on one of the reports that you just made to delete it. Refresh the page to see
     that it is actually deleted.
 
@@ -52,6 +52,7 @@
 * whichever type of user you made, make sure you follow the instructions above for that specific user.
 
 # Places that I think could go wrong
-* With my testing, I couldn't really find any bugs that could be found. The only thing I wish I could've
+* With my testing, I couldn't really find any bugs that could be found. One of the things I couldn't 
+implement though was making the graphs change when check the filters. The only thing I wish I could've
 fixed before the submission is making the pdf open on a new page and not on the page that the user opened
 my site on.
