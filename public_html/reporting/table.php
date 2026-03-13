@@ -29,7 +29,7 @@ require __DIR__ . '/includes/header.php';
     <h1 class="h2 mb-4">Data Table</h1>
     <div class="mb-4">
         <label for="resourceSelect" class="form-label text-secondary">Data type:</label>
-        <select id="resourceSelect" class="form-select bg-secondary text-light border-dark" style="max-width: 220px;">
+        <select id="resourceSelect" class="form-select" style="max-width: 220px;">
             <option value="static" <?= $currentType === 'static' ? 'selected' : '' ?>>Static</option>
             <option value="performance" <?= $currentType === 'performance' ? 'selected' : '' ?>>Performance</option>
             <option value="activity" <?= $currentType === 'activity' ? 'selected' : '' ?>>Activity</option>
@@ -95,7 +95,7 @@ require __DIR__ . '/includes/header.php';
             <form method="post" action="table.php?type=<?= rawurlencode($currentType) ?>" class="mt-3">
                 <input type="hidden" name="type" value="<?= htmlspecialchars($currentType) ?>">
                 <label for="comment_text" class="form-label">Enter observations (decode the meaning of the data)...</label>
-                <textarea name="comment_text" id="comment_text" class="form-control bg-dark text-light border-dark" rows="3" required placeholder="e.g. Static data shows most sessions have JS and cookies enabled."></textarea>
+                <textarea name="comment_text" id="comment_text" class="form-control" rows="3" required placeholder="e.g. Static data shows most sessions have JS and cookies enabled."></textarea>
                 <button type="submit" class="btn btn-primary mt-2">Post Comment</button>
             </form>
             <?php endif; ?>

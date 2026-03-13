@@ -31,11 +31,11 @@ if ($createOk && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'],
             <form method="post" class="row g-2 align-items-end">
                 <div class="col-md-4">
                     <label for="title" class="form-label">Title</label>
-                    <input type="text" name="title" id="title" class="form-control bg-dark text-light border-dark" required placeholder="e.g. Q1 Performance Summary">
+                    <input type="text" name="title" id="title" class="form-control" required placeholder="e.g. Q1 Performance Summary">
                 </div>
                 <div class="col-md-4">
                     <label for="category" class="form-label">Category</label>
-                    <select name="category" id="category" class="form-select bg-dark text-light border-dark">
+                    <select name="category" id="category" class="form-select">
                         <?php foreach (['performance' => 'Performance', 'behavioral' => 'Behavioral', 'static' => 'Static / Overview'] as $val => $label): ?>
                             <?php if (canAccessSection($val)): ?><option value="<?= htmlspecialchars($val) ?>"><?= htmlspecialchars($label) ?></option><?php endif; ?>
                         <?php endforeach; ?>

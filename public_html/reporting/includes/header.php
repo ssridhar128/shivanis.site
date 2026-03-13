@@ -13,15 +13,37 @@ $pageTitle = $pageTitle ?? 'Reports';
     <title><?= htmlspecialchars($pageTitle) ?> – Analytics</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background: #1a1d29 !important; color: #e4e6eb !important; }
+        /* Global: white/light text on all pages for readability */
+        body { background: #1a1d29 !important; color: #ffffff !important; }
+        main, .container { color: #ffffff !important; }
+        h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { color: #ffffff !important; }
+        .card-title { color: #ffffff !important; }
+        .card-body, .card p, .card .mb-0 { color: #e4e6eb !important; }
+        .text-secondary { color: #c7d2fe !important; }
+        .form-label, label { color: #e4e6eb !important; }
+        .form-control, .form-select, textarea.form-control {
+            background: #1a1d29 !important; color: #ffffff !important; border-color: #3f4556 !important;
+        }
+        .form-control::placeholder { color: #9ca3af; }
+        .form-control:focus, .form-select:focus { border-color: #6366f1; color: #ffffff !important; }
+        .form-select option { background: #252836; color: #ffffff; }
+        small { color: #c7d2fe !important; }
+        .table, .table-dark { color: #ffffff !important; --bs-table-bg: #252836; --bs-table-border-color: #3f4556; }
+        .table th { color: #e4e6eb !important; }
+        .table td { color: #ffffff !important; }
+        .list-group-item { background: #252836 !important; color: #ffffff !important; border-color: #3f4556 !important; }
+        .list-group-item-action:hover { background: #2d3142 !important; color: #ffffff !important; }
         .navbar { background: #252836 !important; border-bottom: 1px solid #3f4556 !important; }
         .nav-link { color: #a5b4fc !important; }
         .nav-link:hover { color: #c7d2fe !important; text-decoration: underline; }
-        .btn-primary { background: #6366f1 !important; border-color: #6366f1 !important; }
-        .btn-primary:hover { background: #4f46e5 !important; border-color: #4f46e5 !important; }
-        .btn-outline-light:hover { background: #6366f1 !important; border-color: #6366f1 !important; color: #fff !important; }
+        .navbar-text { color: #e4e6eb !important; }
+        .btn-primary { background: #6366f1 !important; border-color: #6366f1 !important; color: #ffffff !important; }
+        .btn-primary:hover { background: #4f46e5 !important; border-color: #4f46e5 !important; color: #ffffff !important; }
+        .btn-outline-light { color: #e4e6eb !important; border-color: #6b7280; }
+        .btn-outline-light:hover { background: #6366f1 !important; border-color: #6366f1 !important; color: #ffffff !important; }
+        .btn-outline-danger:hover { color: #ffffff !important; }
         .card.bg-secondary { background: #252836 !important; border: 1px solid #3f4556 !important; }
-        .table-dark { --bs-table-bg: #252836; --bs-table-border-color: #3f4556; }
+        pre { color: #e4e6eb !important; }
     </style>
 </head>
 <body class="bg-dark text-light">

@@ -79,15 +79,15 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
                 <input type="hidden" name="action" value="create">
                 <div class="col-md-3">
                     <label for="username" class="form-label">Username</label>
-                    <input type="text" name="username" id="username" class="form-control bg-dark text-light border-dark" required>
+                    <input type="text" name="username" id="username" class="form-control" required placeholder="Username">
                 </div>
                 <div class="col-md-2">
                     <label for="password" class="form-label">Password</label>
-                    <input type="password" name="password" id="password" class="form-control bg-dark text-light border-dark" required minlength="6">
+                    <input type="password" name="password" id="password" class="form-control" required minlength="6" placeholder="Password">
                 </div>
                 <div class="col-md-2">
                     <label for="role" class="form-label">Role</label>
-                    <select name="role" id="role" class="form-select bg-dark text-light border-dark">
+                    <select name="role" id="role" class="form-select">
                         <option value="viewer">Viewer</option>
                         <option value="analyst">Analyst</option>
                         <option value="super_admin">Super Admin</option>
@@ -98,7 +98,7 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
                     <label class="me-2"><input type="checkbox" name="sections[]" value="performance" class="form-check-input"> Performance</label>
                     <label class="me-2"><input type="checkbox" name="sections[]" value="behavioral" class="form-check-input"> Behavioral</label>
                     <label><input type="checkbox" name="sections[]" value="static" class="form-check-input"> Static</label>
-                    <small class="d-block text-secondary">Leave unchecked for all sections.</small>
+                    <small class="d-block">Leave unchecked for all sections.</small>
                 </div>
                 <div class="col-md-2"><button type="submit" class="btn btn-primary">Add</button></div>
             </form>
@@ -121,7 +121,7 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
                 <form method="post" class="d-inline" onsubmit="return confirm('Update this user?');">
                     <input type="hidden" name="action" value="update">
                     <input type="hidden" name="user_id" value="<?= (int) $u['id'] ?>">
-                    <select name="role" class="form-select form-select-sm d-inline-block w-auto bg-dark text-light">
+                    <select name="role" class="form-select form-select-sm d-inline-block w-auto">
                         <option value="viewer" <?= $u['role'] === 'viewer' ? 'selected' : '' ?>>Viewer</option>
                         <option value="analyst" <?= $u['role'] === 'analyst' ? 'selected' : '' ?>>Analyst</option>
                         <option value="super_admin" <?= $u['role'] === 'super_admin' ? 'selected' : '' ?>>Super Admin</option>
