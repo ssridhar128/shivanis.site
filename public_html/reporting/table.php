@@ -164,7 +164,6 @@ require __DIR__ . '/includes/header.php';
     <section class="card bg-secondary border-dark">
         <div class="card-body">
             <h2 class="h5 card-title text-light">Section Observations</h2>
-            <p class="small text-secondary mb-3">Analyst comments for this data type. Each comment is stored with the user and timestamp.</p>
             <?php foreach ($comments as $c): ?>
             <div class="border-bottom border-dark py-2 mb-2">
                 <small class="text-secondary"><?= htmlspecialchars($c['username']) ?> · <?= htmlspecialchars($c['created_at']) ?></small>
