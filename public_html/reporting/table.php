@@ -7,13 +7,34 @@ if (canOnlyViewSavedReports()) {
     exit;
 }
 
-$allowedTypes = ['static', 'performance', 'activity'];
-$currentType = isset($_GET['type']) && in_array($_GET['type'], $allowedTypes, true) ? $_GET['type'] : 'static';
+// Map dropdown type to section for access check. Activity = behavioral section.
+$typeToSection = ['static' => 'static', 'performance' => 'performance', 'activity' => 'behavioral'];
+$allTypes = ['static', 'performance', 'activity'];
+
+// Only show types the user is allowed to see (analyst section restriction).
+$allowedTypesForUser = [];
+foreach ($allTypes as $t) {
+    if (canAccessSection($typeToSection[$t])) {
+        $allowedTypesForUser[] = $t;
+    }
+}
+if (empty($allowedTypesForUser)) {
+    header('Location: 403.php');
+    exit;
+}
+
+$requestedType = isset($_GET['type']) && in_array($_GET['type'], $allTypes, true) ? $_GET['type'] : $allowedTypesForUser[0];
+if (!in_array($requestedType, $allowedTypesForUser, true)) {
+    header('Location: 403.php');
+    exit;
+}
+$currentType = $requestedType;
 $commentCategory = $currentType === 'activity' ? 'behavioral' : $currentType;
+$exportCategory = $commentCategory; // for Export PDF link
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment_text'], $_POST['type']) && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN)) {
     $postType = $_POST['type'];
-    if (in_array($postType, $allowedTypes, true)) {
+    if (in_array($postType, $allowedTypesForUser, true)) {
         $cat = $postType === 'activity' ? 'behavioral' : $postType;
         addReportComment($cat, (string) $_POST['comment_text'], null);
         header('Location: table.php?type=' . $postType);
@@ -26,13 +47,16 @@ $pageTitle = 'Data Table';
 require __DIR__ . '/includes/header.php';
 ?>
 <main class="container py-4">
-    <h1 class="h2 mb-4">Data Table</h1>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <h1 class="h2 mb-0">Data Table</h1>
+        <a href="export-pdf.php?category=<?= rawurlencode($exportCategory) ?>" class="btn btn-outline-light" target="_blank">Export PDF</a>
+    </div>
     <div class="mb-4">
-        <label for="resourceSelect" class="form-label text-secondary">Data type:</label>
+        <label for="resourceSelect" class="form-label">Report:</label>
         <select id="resourceSelect" class="form-select" style="max-width: 220px;">
-            <option value="static" <?= $currentType === 'static' ? 'selected' : '' ?>>Static</option>
-            <option value="performance" <?= $currentType === 'performance' ? 'selected' : '' ?>>Performance</option>
-            <option value="activity" <?= $currentType === 'activity' ? 'selected' : '' ?>>Activity</option>
+            <?php foreach ($allowedTypesForUser as $t): ?>
+            <option value="<?= htmlspecialchars($t) ?>" <?= $currentType === $t ? 'selected' : '' ?>><?= $t === 'static' ? 'Static / Overview' : ($t === 'performance' ? 'Performance' : 'Behavioral (Activity)') ?></option>
+            <?php endforeach; ?>
         </select>
     </div>
 

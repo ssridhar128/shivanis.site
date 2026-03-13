@@ -60,9 +60,6 @@ $pageTitle = $pageTitle ?? 'Reports';
                     <li class="nav-item"><a class="nav-link" href="reports.php">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="table.php">Data Table</a></li>
                     <li class="nav-item"><a class="nav-link" href="charts.php">Charts</a></li>
-                    <?php if (canAccessSection('performance')): ?><li class="nav-item"><a class="nav-link" href="report-performance.php">Performance</a></li><?php endif; ?>
-                    <?php if (canAccessSection('behavioral')): ?><li class="nav-item"><a class="nav-link" href="report-behavioral.php">Behavioral</a></li><?php endif; ?>
-                    <?php if (canAccessSection('static')): ?><li class="nav-item"><a class="nav-link" href="report-static.php">Static / Overview</a></li><?php endif; ?>
                 <?php endif; ?>
                 <li class="nav-item"><a class="nav-link" href="saved-reports.php">Saved Reports</a></li>
                 <?php if ($canManageUsers): ?>
