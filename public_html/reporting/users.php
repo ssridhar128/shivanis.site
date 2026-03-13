@@ -1,15 +1,15 @@
 <?php
 require_once __DIR__ . '/auth.php';
 requireSuperAdmin();
-$pageTitle = 'User management';
-require __DIR__ . '/includes/header.php';
 
 $pdo = getDb();
 $message = '';
 $error = '';
 
+// Process all POST requests and redirects BEFORE drawing any HTML
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
+    
     if ($action === 'create') {
         $username = trim((string) ($_POST['username'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
@@ -32,22 +32,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $error = 'Username required, password at least 6 characters, and valid role.';
         }
-} elseif ($action === 'update' && isset($_POST['user_id'])) {
-    $userId = (int) $_POST['user_id'];
-    $role = (string) ($_POST['role'] ?? 'viewer');
-    $sections = null;
-    if ($role === 'analyst' && !empty($_POST['sections']) && is_array($_POST['sections'])) {
-        $sections = json_encode(array_values(array_intersect($_POST['sections'], ['performance', 'behavioral', 'static'])));
-    }
-    if ($role === 'analyst' && ($sections === null || $sections === '[]')) {
+    } elseif ($action === 'update' && isset($_POST['user_id'])) {
+        $userId = (int) $_POST['user_id'];
+        $role = (string) ($_POST['role'] ?? 'viewer');
         $sections = null;
-    }
-    if (in_array($role, ['super_admin', 'analyst', 'viewer'], true)) {
-        $stmt = $pdo->prepare('UPDATE reporting_users SET role = ?, sections = ? WHERE id = ?');
-        $stmt->execute([$role, $sections, $userId]);
-        $message = 'User updated. Section changes take effect after the user logs out and logs back in.';
-    }
-} elseif ($action === 'delete' && isset($_POST['user_id'])) {
+        if ($role === 'analyst' && !empty($_POST['sections']) && is_array($_POST['sections'])) {
+            $sections = json_encode(array_values(array_intersect($_POST['sections'], ['performance', 'behavioral', 'static'])));
+        }
+        if ($role === 'analyst' && ($sections === null || $sections === '[]')) {
+            $sections = null;
+        }
+        if (in_array($role, ['super_admin', 'analyst', 'viewer'], true)) {
+            $stmt = $pdo->prepare('UPDATE reporting_users SET role = ?, sections = ? WHERE id = ?');
+            $stmt->execute([$role, $sections, $userId]);
+            $message = 'User updated. Section changes take effect after the user logs out and logs back in.';
+        }
+    } elseif ($action === 'delete' && isset($_POST['user_id'])) {
         $userId = (int) $_POST['user_id'];
         if ($userId !== getCurrentUserId()) {
             $stmt = $pdo->prepare('DELETE FROM reporting_users WHERE id = ?');
@@ -57,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'You cannot delete yourself.';
         }
     }
+    
     if ($message || $error) {
         $base = dirname($_SERVER['SCRIPT_NAME']);
         if ($base === '/' || $base === '\\' || $base === '.') {
@@ -69,6 +70,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 }
+
+// NOW we can safely include the header and draw the page
+$pageTitle = 'User management';
+require __DIR__ . '/includes/header.php';
 
 $message = $_GET['message'] ?? '';
 $error = $_GET['error'] ?? '';
