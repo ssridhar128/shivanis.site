@@ -34,22 +34,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($action === 'update' && isset($_POST['user_id'])) {
         $userId = (int) $_POST['user_id'];
-        $role = (string) ($_POST['role'] ?? 'viewer');
-        $sections = null;
-        if ($role === 'analyst' && !empty($_POST['sections']) && is_array($_POST['sections'])) {
-            $sections = json_encode(array_values(array_intersect($_POST['sections'], ['performance', 'behavioral', 'static'])));
-        }
-        if ($role === 'analyst' && ($sections === null || $sections === '[]')) {
+        
+        // Check if the target is the protected grader account
+        $stmtCheck = $pdo->prepare('SELECT username FROM reporting_users WHERE id = ?');
+        $stmtCheck->execute([$userId]);
+        $targetUser = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+        
+        if ($targetUser && $targetUser['username'] === 'grader') {
+            $error = 'The primary grader account cannot be modified.';
+        } else {
+            $role = (string) ($_POST['role'] ?? 'viewer');
             $sections = null;
-        }
-        if (in_array($role, ['super_admin', 'analyst', 'viewer'], true)) {
-            $stmt = $pdo->prepare('UPDATE reporting_users SET role = ?, sections = ? WHERE id = ?');
-            $stmt->execute([$role, $sections, $userId]);
-            $message = 'User updated. Section changes take effect after the user logs out and logs back in.';
+            if ($role === 'analyst' && !empty($_POST['sections']) && is_array($_POST['sections'])) {
+                $sections = json_encode(array_values(array_intersect($_POST['sections'], ['performance', 'behavioral', 'static'])));
+            }
+            if ($role === 'analyst' && ($sections === null || $sections === '[]')) {
+                $sections = null;
+            }
+            if (in_array($role, ['super_admin', 'analyst', 'viewer'], true)) {
+                $stmt = $pdo->prepare('UPDATE reporting_users SET role = ?, sections = ? WHERE id = ?');
+                $stmt->execute([$role, $sections, $userId]);
+                $message = 'User updated. Section changes take effect after the user logs out and logs back in.';
+            }
         }
     } elseif ($action === 'delete' && isset($_POST['user_id'])) {
         $userId = (int) $_POST['user_id'];
-        if ($userId !== getCurrentUserId()) {
+        
+        // Check if the target is the protected grader account
+        $stmtCheck = $pdo->prepare('SELECT username FROM reporting_users WHERE id = ?');
+        $stmtCheck->execute([$userId]);
+        $targetUser = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+        
+        if ($targetUser && $targetUser['username'] === 'grader') {
+            $error = 'The primary grader account cannot be deleted.';
+        } elseif ($userId !== getCurrentUserId()) {
             $stmt = $pdo->prepare('DELETE FROM reporting_users WHERE id = ?');
             $stmt->execute([$userId]);
             $message = 'User deleted.';
@@ -132,30 +150,34 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
             <td><?= htmlspecialchars($sectionsStr) ?></td>
             <td><?= htmlspecialchars($u['created_at']) ?></td>
             <td>
-                <form method="post" class="d-inline" onsubmit="return confirm('Update this user?');">
-                    <input type="hidden" name="action" value="update">
-                    <input type="hidden" name="user_id" value="<?= (int) $u['id'] ?>">
-                    <select name="role" class="form-select form-select-sm d-inline-block w-auto update-role-select">
-                        <option value="viewer" <?= $u['role'] === 'viewer' ? 'selected' : '' ?>>Viewer</option>
-                        <option value="analyst" <?= $u['role'] === 'analyst' ? 'selected' : '' ?>>Analyst</option>
-                        <option value="super_admin" <?= $u['role'] === 'super_admin' ? 'selected' : '' ?>>Super Admin</option>
-                    </select>
-                    
-                    <?php $uSections = $sections; ?>
-                    <span class="update-sections-container ms-2" style="<?= $u['role'] === 'analyst' ? '' : 'display: none;' ?>">
-                        <label><input type="checkbox" name="sections[]" value="performance" <?= in_array('performance', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> P</label>
-                        <label class="ms-1"><input type="checkbox" name="sections[]" value="behavioral" <?= in_array('behavioral', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> B</label>
-                        <label class="ms-1"><input type="checkbox" name="sections[]" value="static" <?= in_array('static', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> S</label>
-                    </span>
-                    
-                    <button type="submit" class="btn btn-sm btn-outline-light ms-1">Update</button>
-                </form>
-                <?php if ((int) $u['id'] !== getCurrentUserId()): ?>
-                <form method="post" class="d-inline ms-1" onsubmit="return confirm('Delete this user?');">
-                    <input type="hidden" name="action" value="delete">
-                    <input type="hidden" name="user_id" value="<?= (int) $u['id'] ?>">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                </form>
+                <?php if ($u['username'] === 'grader'): ?>
+                    <span class="text-secondary fst-italic">Protected System Account</span>
+                <?php else: ?>
+                    <form method="post" class="d-inline" onsubmit="return confirm('Update this user?');">
+                        <input type="hidden" name="action" value="update">
+                        <input type="hidden" name="user_id" value="<?= (int) $u['id'] ?>">
+                        <select name="role" class="form-select form-select-sm d-inline-block w-auto update-role-select">
+                            <option value="viewer" <?= $u['role'] === 'viewer' ? 'selected' : '' ?>>Viewer</option>
+                            <option value="analyst" <?= $u['role'] === 'analyst' ? 'selected' : '' ?>>Analyst</option>
+                            <option value="super_admin" <?= $u['role'] === 'super_admin' ? 'selected' : '' ?>>Super Admin</option>
+                        </select>
+                        
+                        <?php $uSections = $sections; ?>
+                        <span class="update-sections-container ms-2" style="<?= $u['role'] === 'analyst' ? '' : 'display: none;' ?>">
+                            <label><input type="checkbox" name="sections[]" value="performance" <?= in_array('performance', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> P</label>
+                            <label class="ms-1"><input type="checkbox" name="sections[]" value="behavioral" <?= in_array('behavioral', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> B</label>
+                            <label class="ms-1"><input type="checkbox" name="sections[]" value="static" <?= in_array('static', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> S</label>
+                        </span>
+                        
+                        <button type="submit" class="btn btn-sm btn-outline-light ms-1">Update</button>
+                    </form>
+                    <?php if ((int) $u['id'] !== getCurrentUserId()): ?>
+                    <form method="post" class="d-inline ms-1" onsubmit="return confirm('Delete this user?');">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="user_id" value="<?= (int) $u['id'] ?>">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                    <?php endif; ?>
                 <?php endif; ?>
             </td>
         </tr>
