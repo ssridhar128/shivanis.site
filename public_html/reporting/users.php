@@ -176,7 +176,7 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
                         </select>
                         
                         <?php $uSections = $sections; ?>
-                        <div class="update-sections-container dropdown d-inline-block ms-1" style="<?= $u['role'] === 'analyst' ? '' : 'display: none;' ?>">
+                        <div class="update-sections-container dropdown ms-1" style="<?= $u['role'] === 'analyst' ? 'display: inline-block;' : 'display: none;' ?>">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                                 Sections
                             </button>
@@ -232,7 +232,6 @@ document.addEventListener('DOMContentLoaded', function() {
         select.addEventListener('change', function() {
             const sectionsContainer = this.closest('form').querySelector('.update-sections-container');
             if (sectionsContainer) {
-                // Swapped to inline-block since we are using a div dropdown now
                 sectionsContainer.style.display = (this.value === 'analyst') ? 'inline-block' : 'none';
             }
         });
