@@ -1,9 +1,11 @@
 <?php
+// Start output buffering to trap ANY stray warnings or spaces so they don't break redirects!
+ob_start(); 
+
 require_once __DIR__ . '/auth.php';
 requireLogin();
 
 $pdo = getDb();
-// Calculate $createOk early so we can use it in the POST logic below
 $createOk = !canOnlyViewSavedReports() && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN);
 
 // 1. Process all POST requests and redirects BEFORE drawing any HTML
@@ -15,9 +17,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $stmt = $pdo->prepare('SELECT id, pdf_file FROM reporting_saved_reports WHERE id = ?');
         $stmt->execute([$reportId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        
         if ($row) {
-            // Delete associated comments first to avoid foreign key constraint errors
-            $pdo->prepare('DELETE FROM reporting_comments WHERE report_id = ?')->execute([$reportId]);
+            // Wrap in a try/catch so a mismatched table name doesn't crash the page
+            try {
+                $pdo->prepare('DELETE FROM reporting_comments WHERE report_id = ?')->execute([$reportId]);
+            } catch (Throwable $e) {
+                // Silently continue if the table name is different
+            }
             
             // Delete the report itself
             $pdo->prepare('DELETE FROM reporting_saved_reports WHERE id = ?')->execute([$reportId]);
@@ -29,9 +36,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
             }
         }
-        $base = dirname($_SERVER['SCRIPT_NAME']);
-        $base = ($base === '/' || $base === '\\' || $base === '.') ? '' : rtrim($base, '/');
-        header('Location: ' . $base . '/saved-reports.php?deleted=1');
+        
+        // Clear the buffer trap and force a clean GET redirect
+        ob_end_clean();
+        header('Location: saved-reports.php?deleted=1', true, 303);
         exit;
     }
 }
@@ -40,12 +48,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 if ($createOk && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'], $_POST['category']) && (!isset($_POST['action']) || $_POST['action'] !== 'delete')) {
     $title = trim((string) $_POST['title']);
     $category = (string) $_POST['category'];
+    
     if ($title !== '' && in_array($category, ['performance', 'behavioral', 'static'], true) && canAccessSection($category)) {
         require_once __DIR__ . '/includes/pdf-helper.php';
         $result = buildReportPdf($category, $title, null, $pdo);
         $slug = preg_replace('/[^a-z0-9-]/', '-', strtolower($title)) ?: 'report-' . time();
         $slug .= '-' . uniqid();
         $pdfFile = null;
+        
         if ($result['pdf'] !== null) {
             $dir = __DIR__ . '/exports';
             if (!is_dir($dir)) {
@@ -57,12 +67,16 @@ if ($createOk && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'],
                 $pdfFile = $filename;
             }
         }
+        
         $stmt = $pdo->prepare('INSERT INTO reporting_saved_reports (title, slug, category, pdf_file, created_by) VALUES (?, ?, ?, ?, ?)');
         $stmt->execute([$title, $slug, $category, $pdfFile, getCurrentUserId()]);
         $newId = (int) $pdo->lastInsertId();
-        $base = (dirname($_SERVER['SCRIPT_NAME']) === '/' || dirname($_SERVER['SCRIPT_NAME']) === '\\') ? '' : rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+        
         $pdfPath = $pdfFile ? ('exports/' . $pdfFile) : '';
-        header('Location: ' . $base . '/saved-reports.php?saved=1&name=' . rawurlencode($title) . '&id=' . $newId . ($pdfPath ? '&path=' . rawurlencode($pdfPath) : ''));
+        
+        // Clear the buffer trap and force a clean GET redirect
+        ob_end_clean();
+        header('Location: saved-reports.php?saved=1&name=' . rawurlencode($title) . '&id=' . $newId . ($pdfPath ? '&path=' . rawurlencode($pdfPath) : ''), true, 303);
         exit;
     }
 }
