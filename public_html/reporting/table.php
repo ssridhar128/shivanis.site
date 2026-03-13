@@ -32,20 +32,35 @@ $currentType = $requestedType;
 $commentCategory = $currentType === 'activity' ? 'behavioral' : $currentType;
 $exportCategory = $commentCategory; // for Export PDF link
 
-// Save report from Data Table: prompt name → create saved report → redirect to view
+// Save as PDF from Data Table: prompt name → generate PDF, save file, add to Saved Reports list
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_report' && isset($_POST['report_title'], $_POST['type']) && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN)) {
     $title = trim((string) $_POST['report_title']);
     $saveType = (string) $_POST['type'];
-    if ($title !== '' && in_array($saveType, $allowedTypesForUser, true)) {
+    if ($title !== '' && in_array($saveType, $allowedTypesForUser, true) && canAccessSection($typeToSection[$saveType])) {
         $cat = $saveType === 'activity' ? 'behavioral' : $saveType;
-        if (canAccessSection($typeToSection[$saveType])) {
-            $pdo = getDb();
-            $slug = preg_replace('/[^a-z0-9-]/', '-', strtolower($title)) ?: 'report-' . time();
-            $stmt = $pdo->prepare('INSERT INTO reporting_saved_reports (title, slug, category, created_by) VALUES (?, ?, ?, ?)');
-            $stmt->execute([$title, $slug . '-' . uniqid(), $cat, getCurrentUserId()]);
-            header('Location: view-report.php?id=' . (int) $pdo->lastInsertId());
-            exit;
+        $pdo = getDb();
+        require_once __DIR__ . '/includes/pdf-helper.php';
+        $result = buildReportPdf($cat, $title, null, $pdo);
+        $slug = preg_replace('/[^a-z0-9-]/', '-', strtolower($title)) ?: 'report-' . time();
+        $slug .= '-' . uniqid();
+        $pdfFile = null;
+        if ($result['pdf'] !== null) {
+            $dir = __DIR__ . '/exports';
+            if (!is_dir($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+            $filename = $slug . '.pdf';
+            $path = $dir . '/' . $filename;
+            if (file_put_contents($path, $result['pdf']) !== false) {
+                $pdfFile = $filename;
+            }
         }
+        $stmt = $pdo->prepare('INSERT INTO reporting_saved_reports (title, slug, category, pdf_file, created_by) VALUES (?, ?, ?, ?, ?)');
+        $stmt->execute([$title, $slug, $cat, $pdfFile, getCurrentUserId()]);
+        $base = dirname($_SERVER['SCRIPT_NAME']);
+        $base = ($base === '/' || $base === '\\' || $base === '.') ? '' : rtrim($base, '/');
+        header('Location: ' . $base . '/saved-reports.php?saved=1');
+        exit;
     }
 }
 
@@ -67,29 +82,29 @@ require __DIR__ . '/includes/header.php';
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <h1 class="h2 mb-0">Data Table</h1>
         <div class="d-flex gap-2">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#saveReportModal">Save report</button>
-            <a href="export-pdf.php?category=<?= rawurlencode($exportCategory) ?>" class="btn btn-outline-light" target="_blank">Export PDF</a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#saveReportModal">Export PDF</button>
+            <a href="export-pdf.php?category=<?= rawurlencode($exportCategory) ?>" class="btn btn-outline-light" target="_blank">Preview PDF</a>
         </div>
     </div>
-    <!-- Modal: name and save current view to Saved Reports -->
+    <!-- Modal: name this PDF and save to Saved Reports (same content as Export PDF) -->
     <div class="modal fade" id="saveReportModal" tabindex="-1" aria-labelledby="saveReportModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content bg-secondary border-dark">
                 <div class="modal-header border-dark">
-                    <h5 class="modal-title text-light" id="saveReportModalLabel">Save report</h5>
+                    <h5 class="modal-title text-light" id="saveReportModalLabel">Export PDF</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="post" action="table.php?type=<?= rawurlencode($currentType) ?>" id="saveReportForm">
                     <div class="modal-body">
                         <input type="hidden" name="action" value="save_report">
                         <input type="hidden" name="type" id="saveReportType" value="<?= htmlspecialchars($currentType) ?>">
-                        <label for="report_title" class="form-label text-light">Report name</label>
+                        <label for="report_title" class="form-label text-light">Name for this report (PDF)</label>
                         <input type="text" name="report_title" id="report_title" class="form-control" required placeholder="e.g. Q1 Performance Summary" maxlength="255">
-                        <p class="small text-secondary mt-2 mb-0">This will add a link on the Saved Reports page and open the report.</p>
+                        <p class="small text-secondary mt-2 mb-0">Saves the same PDF you see when you click Preview PDF. It will appear on the Saved Reports page with a link to open it.</p>
                     </div>
                     <div class="modal-footer border-dark">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save and open report</button>
+                        <button type="submit" class="btn btn-primary">Save PDF to Saved Reports</button>
                     </div>
                 </form>
             </div>

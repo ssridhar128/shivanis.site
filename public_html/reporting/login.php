@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['sections'] = $info['sections'] ?? null;
         $redirect = $_GET['redirect'] ?? 'reports.php';
         $redirect = preg_replace('#^/+|\.\./#', '', $redirect) ?: 'reports.php';
-        $allowed = ['reports.php', 'table.php', 'charts.php', 'saved-reports.php', 'view-report.php', 'report-performance.php', 'report-behavioral.php', 'report-static.php', 'users.php', 'export-pdf.php'];
+        $allowed = ['reports.php', 'table.php', 'charts.php', 'saved-reports.php', 'view-report.php', 'view-pdf.php', 'report-performance.php', 'report-behavioral.php', 'report-static.php', 'users.php', 'export-pdf.php'];
         $base = strtok($redirect, '?');
         if (!in_array($base, $allowed, true)) {
             $redirect = 'reports.php';

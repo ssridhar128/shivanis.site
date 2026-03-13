@@ -58,7 +58,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     if ($message || $error) {
-        header('Location: users.php?message=' . urlencode($message) . '&error=' . urlencode($error), true, 303);
+        $base = dirname($_SERVER['SCRIPT_NAME']);
+        if ($base === '/' || $base === '\\' || $base === '.') {
+            $base = '';
+        } else {
+            $base = rtrim($base, '/');
+        }
+        $url = $base . '/users.php?message=' . urlencode($message) . '&error=' . urlencode($error);
+        header('Location: ' . $url, true, 303);
         exit;
     }
 }
