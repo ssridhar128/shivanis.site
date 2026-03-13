@@ -71,7 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// 2. NOW it is safe to load the HTML header and draw the page
 $pageTitle = 'User management';
 require __DIR__ . '/includes/header.php';
 
