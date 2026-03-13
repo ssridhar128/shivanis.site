@@ -114,6 +114,7 @@ function buildReportHtml(string $category, string $title, ?int $savedId, \PDO $p
         'js_enabled' => 'JS Enabled',
         'cookies_enabled' => 'Cookies Enabled',
         'fast_load' => 'Load Time < 1000ms',
+        'slow_load' => 'Load Time >= 1000ms',
         'idle_breaks' => 'Includes Idle Breaks'
     ];
     $niceFilters = [];
@@ -209,6 +210,13 @@ function buildReportHtml(string $category, string $title, ?int $savedId, \PDO $p
             if ($t === null && isset($pl['loadEventEnd'], $pl['startTime'])) $t = $pl['loadEventEnd'] - $pl['startTime'];
             if (!$t || $t >= 1000) $keep = false;
         }
+        
+        if (in_array('slow_load', $filters)) {
+            $t = $pl['totalLoadTime'] ?? null;
+            if ($t === null && isset($pl['loadEventEnd'], $pl['startTime'])) $t = $pl['loadEventEnd'] - $pl['startTime'];
+            if (!$t || $t < 1000) $keep = false;
+        }
+
         if (in_array('idle_breaks', $filters) && ($pl['event'] ?? '') !== 'idle_break') $keep = false;
 
         if ($keep) {

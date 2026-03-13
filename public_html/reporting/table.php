@@ -33,6 +33,7 @@ $exportCategory = $commentCategory;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_report' && isset($_POST['report_title'], $_POST['type']) && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN)) {
     $title = trim((string) $_POST['report_title']);
     $saveType = (string) $_POST['type'];
+    
     $analystComments = trim((string) ($_POST['analyst_comments'] ?? ''));
     $filtersJson = (string) ($_POST['filters'] ?? '[]');
     $filters = json_decode($filtersJson, true) ?: [];
@@ -219,13 +220,15 @@ document.getElementById('saveReportModal') && document.getElementById('saveRepor
     const chartOpt = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: CHART_COLORS.text } } }, scales: { x: { ticks: { color: CHART_COLORS.text }, grid: { color: CHART_COLORS.grid } }, y: { ticks: { color: CHART_COLORS.text }, grid: { color: CHART_COLORS.grid } } } };
     let chartInstances = { feature: null, line: null, stacked: null };
 
+    // Added the new slow_load filter here!
     const filterDefinitions = {
         'static': [
             { id: 'js_enabled', label: 'JS Enabled' },
             { id: 'cookies_enabled', label: 'Cookies Enabled' }
         ],
         'performance': [
-            { id: 'fast_load', label: 'Load Time < 1000ms' }
+            { id: 'fast_load', label: 'Load Time < 1000ms' },
+            { id: 'slow_load', label: 'Load Time >= 1000ms' }
         ],
         'activity': [
             { id: 'idle_breaks', label: 'Includes Idle Breaks' }
@@ -278,10 +281,19 @@ document.getElementById('saveReportModal') && document.getElementById('saveRepor
             
             if (activeFilters.includes('js_enabled') && !pl.jsEnabled) return false;
             if (activeFilters.includes('cookies_enabled') && !pl.cookiesEnabled) return false;
+            
+            // Logic for the fast_load filter
             if (activeFilters.includes('fast_load')) {
                 let t = pl.totalLoadTime || (pl.loadEventEnd ? pl.loadEventEnd - pl.startTime : null) || (pl.timingObject ? pl.timingObject.loadEventEnd - pl.timingObject.startTime : null);
                 if (!t || t >= 1000) return false;
             }
+            
+            // Logic for the new slow_load filter
+            if (activeFilters.includes('slow_load')) {
+                let t = pl.totalLoadTime || (pl.loadEventEnd ? pl.loadEventEnd - pl.startTime : null) || (pl.timingObject ? pl.timingObject.loadEventEnd - pl.timingObject.startTime : null);
+                if (!t || t < 1000) return false;
+            }
+
             if (activeFilters.includes('idle_breaks') && pl.event !== 'idle_break') return false;
             
             return true;
