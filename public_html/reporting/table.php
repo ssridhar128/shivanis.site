@@ -175,7 +175,7 @@ require __DIR__ . '/includes/header.php';
             <?php if (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN): ?>
             <form method="post" action="table.php?type=<?= rawurlencode($currentType) ?>" class="mt-3">
                 <input type="hidden" name="type" value="<?= htmlspecialchars($currentType) ?>">
-                <label for="comment_text" class="form-label">Enter observations (decode the meaning of the data)...</label>
+                <label for="comment_text" class="form-label">Enter observations:</label>
                 <textarea name="comment_text" id="comment_text" class="form-control" rows="3" required placeholder="e.g. Static data shows most sessions have JS and cookies enabled."></textarea>
                 <button type="submit" class="btn btn-primary mt-2">Post Comment</button>
             </form>
