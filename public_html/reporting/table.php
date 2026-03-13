@@ -32,6 +32,23 @@ $currentType = $requestedType;
 $commentCategory = $currentType === 'activity' ? 'behavioral' : $currentType;
 $exportCategory = $commentCategory; // for Export PDF link
 
+// Save report from Data Table: prompt name → create saved report → redirect to view
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_report' && isset($_POST['report_title'], $_POST['type']) && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN)) {
+    $title = trim((string) $_POST['report_title']);
+    $saveType = (string) $_POST['type'];
+    if ($title !== '' && in_array($saveType, $allowedTypesForUser, true)) {
+        $cat = $saveType === 'activity' ? 'behavioral' : $saveType;
+        if (canAccessSection($typeToSection[$saveType])) {
+            $pdo = getDb();
+            $slug = preg_replace('/[^a-z0-9-]/', '-', strtolower($title)) ?: 'report-' . time();
+            $stmt = $pdo->prepare('INSERT INTO reporting_saved_reports (title, slug, category, created_by) VALUES (?, ?, ?, ?)');
+            $stmt->execute([$title, $slug . '-' . uniqid(), $cat, getCurrentUserId()]);
+            header('Location: view-report.php?id=' . (int) $pdo->lastInsertId());
+            exit;
+        }
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment_text'], $_POST['type']) && (getCurrentRole() === ROLE_ANALYST || getCurrentRole() === ROLE_SUPER_ADMIN)) {
     $postType = $_POST['type'];
     if (in_array($postType, $allowedTypesForUser, true)) {
@@ -49,7 +66,34 @@ require __DIR__ . '/includes/header.php';
 <main class="container py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <h1 class="h2 mb-0">Data Table</h1>
-        <a href="export-pdf.php?category=<?= rawurlencode($exportCategory) ?>" class="btn btn-outline-light" target="_blank">Export PDF</a>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#saveReportModal">Save report</button>
+            <a href="export-pdf.php?category=<?= rawurlencode($exportCategory) ?>" class="btn btn-outline-light" target="_blank">Export PDF</a>
+        </div>
+    </div>
+    <!-- Modal: name and save current view to Saved Reports -->
+    <div class="modal fade" id="saveReportModal" tabindex="-1" aria-labelledby="saveReportModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content bg-secondary border-dark">
+                <div class="modal-header border-dark">
+                    <h5 class="modal-title text-light" id="saveReportModalLabel">Save report</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="table.php?type=<?= rawurlencode($currentType) ?>" id="saveReportForm">
+                    <div class="modal-body">
+                        <input type="hidden" name="action" value="save_report">
+                        <input type="hidden" name="type" id="saveReportType" value="<?= htmlspecialchars($currentType) ?>">
+                        <label for="report_title" class="form-label text-light">Report name</label>
+                        <input type="text" name="report_title" id="report_title" class="form-control" required placeholder="e.g. Q1 Performance Summary" maxlength="255">
+                        <p class="small text-secondary mt-2 mb-0">This will add a link on the Saved Reports page and open the report.</p>
+                    </div>
+                    <div class="modal-footer border-dark">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save and open report</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
     <div class="mb-4">
         <label for="resourceSelect" class="form-label">Report:</label>
@@ -128,6 +172,13 @@ require __DIR__ . '/includes/header.php';
 </main>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="js/chart-data.js"></script>
+<script>
+document.getElementById('saveReportModal') && document.getElementById('saveReportModal').addEventListener('show.bs.modal', function() {
+    var sel = document.getElementById('resourceSelect');
+    var hid = document.getElementById('saveReportType');
+    if (sel && hid) { hid.value = sel.value; }
+});
+</script>
 <script>
 (function() {
     const chartOpt = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: CHART_COLORS.text } } }, scales: { x: { ticks: { color: CHART_COLORS.text }, grid: { color: CHART_COLORS.grid } }, y: { ticks: { color: CHART_COLORS.text }, grid: { color: CHART_COLORS.grid } } } };

@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (in_array($role, ['super_admin', 'analyst', 'viewer'], true)) {
         $stmt = $pdo->prepare('UPDATE reporting_users SET role = ?, sections = ? WHERE id = ?');
         $stmt->execute([$role, $sections, $userId]);
-        $message = 'User updated.';
+        $message = 'User updated. Section changes take effect after the user logs out and logs back in.';
     }
 } elseif ($action === 'delete' && isset($_POST['user_id'])) {
         $userId = (int) $_POST['user_id'];
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     if ($message || $error) {
-        header('Location: users.php?message=' . urlencode($message) . '&error=' . urlencode($error));
+        header('Location: users.php?message=' . urlencode($message) . '&error=' . urlencode($error), true, 303);
         exit;
     }
 }
@@ -109,8 +109,10 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
         <thead><tr><th>Username</th><th>Role</th><th>Sections (analyst)</th><th>Created</th><th></th></tr></thead>
         <tbody>
         <?php foreach ($users as $u):
-            $sections = !empty($u['sections']) ? json_decode($u['sections'], true) : null;
-            $sectionsStr = is_array($sections) ? implode(', ', $sections) : ($u['role'] === 'analyst' ? 'all' : '—');
+            $raw = $u['sections'] ?? null;
+            $sections = is_array($raw) ? $raw : (is_string($raw) && $raw !== '' ? json_decode($raw, true) : null);
+            $sections = is_array($sections) ? $sections : [];
+            $sectionsStr = $u['role'] === 'analyst' ? (count($sections) > 0 ? implode(', ', $sections) : 'all') : '—';
         ?>
         <tr>
             <td><?= htmlspecialchars($u['username']) ?></td>
@@ -126,9 +128,7 @@ $users = $pdo->query('SELECT id, username, role, sections, created_at FROM repor
                         <option value="analyst" <?= $u['role'] === 'analyst' ? 'selected' : '' ?>>Analyst</option>
                         <option value="super_admin" <?= $u['role'] === 'super_admin' ? 'selected' : '' ?>>Super Admin</option>
                     </select>
-                    <?php
-                    $uSections = is_array($sections) ? $sections : [];
-                    ?>
+                    <?php $uSections = $sections; ?>
                     <label class="ms-2"><input type="checkbox" name="sections[]" value="performance" <?= in_array('performance', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> P</label>
                     <label class="ms-1"><input type="checkbox" name="sections[]" value="behavioral" <?= in_array('behavioral', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> B</label>
                     <label class="ms-1"><input type="checkbox" name="sections[]" value="static" <?= in_array('static', $uSections, true) ? 'checked' : '' ?> class="form-check-input"> S</label>
